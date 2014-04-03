@@ -23,7 +23,7 @@ dbListTables(LSAY)
 ###################
 #File Descriptions#
 ###################
-#meta <- dbGetQuery(LSAY, "SELECT * FROM META2003")
+meta <- dbGetQuery(LSAY, "SELECT * FROM META2003")
 #####################
 #University Entrants#
 #####################
