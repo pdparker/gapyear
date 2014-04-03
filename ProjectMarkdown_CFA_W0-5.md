@@ -1,5 +1,6 @@
 Gap Years in Australia: Effects on Multidimensional Life Satisfaction
 ========================================================
+<a name="top"></a>
 
 Contents:
 
@@ -28,6 +29,8 @@ Further education drop-outs were taking by exploring if in any of the years unde
 
 The number of adolescence who directly entered university after high-school was ***2259***. The number of adolescents that took a gap-year (offered further education but defered) was ***645***. Of the direct entrants, those who withdraw from further education in the direct entrant group were ***81***. For ther gap-year group, those who eventually returned to further education were ***461***.
 
+[top](#top)
+
 <a name="cohort"></a>
 Cohort Sequence Design
 -----------------------
@@ -52,6 +55,10 @@ Items in **bold** are the ones used in the analysis.
 
 
 
+
+
+[top](#top)
+
 <a name="lifeSat"></a>
 CFA Growth - Life Satisfaction
 -----------------------
@@ -62,30 +69,30 @@ Group Parameters significant for Life Satisfaction so this model is plotted at t
 ```
 ##      chisq df    cfi    tli   rmsea
 ## [1,] 63.51 16 0.9869 0.9877 0.03209
-## [2,] 31.17 12 0.9947 0.9934 0.02354
+## [2,] 37.86 12 0.9928 0.9911 0.02734
 ```
 
 ```
 ## Chi Square Difference Test
 ## 
 ##      Df   AIC   BIC Chisq Chisq diff Df diff Pr(>Chisq)    
-## fitQ 12 19403 19493  31.2                                  
-## fitL 16 19428 19493  63.5       32.3       4    1.6e-06 ***
+## fitQ 12 19410 19499  37.9                                  
+## fitL 16 19428 19493  63.5       25.7       4    3.7e-05 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 ```
-## lavaan (0.5-15) converged normally after 103 iterations
+## lavaan (0.5-16) converged normally after  97 iterations
 ## 
 ##   Number of observations                          2883
 ## 
 ##   Number of missing patterns                        16
 ## 
 ##   Estimator                                         ML
-##   Minimum Function Test Statistic               31.172
+##   Minimum Function Test Statistic               37.857
 ##   Degrees of freedom                                12
-##   P-value (Chi-square)                           0.002
+##   P-value (Chi-square)                           0.000
 ## 
 ## Parameter estimates:
 ## 
@@ -102,59 +109,66 @@ Group Parameters significant for Life Satisfaction so this model is plotted at t
 ##     W4LIFE.SAT        1.000
 ##     W5LIFE.SAT        1.000
 ##   s =~
-##     W0LIFE.SAT       -1.000
-##     W1LIFE.SAT        0.000
-##     W2LIFE.SAT        1.000
-##     W3LIFE.SAT        2.000
-##     W4LIFE.SAT        3.000
-##     W5LIFE.SAT        4.000
+##     W0LIFE.SAT        0.000
+##     W1LIFE.SAT        1.000
+##     W2LIFE.SAT        2.000
+##     W3LIFE.SAT        3.000
+##     W4LIFE.SAT        4.000
+##     W5LIFE.SAT        5.000
 ##   q =~
-##     W0LIFE.SAT       -1.000
-##     W1LIFE.SAT        0.000
-##     W2LIFE.SAT        1.000
-##     W3LIFE.SAT        4.000
-##     W4LIFE.SAT        9.000
-##     W5LIFE.SAT       16.000
+##     W0LIFE.SAT        0.000
+##     W1LIFE.SAT        1.000
+##     W2LIFE.SAT        4.000
+##     W3LIFE.SAT        9.000
+##     W4LIFE.SAT       16.000
+##     W5LIFE.SAT       25.000
 ## 
 ## Covariances:
 ##   i ~~
-##     s                 0.005    0.002    2.072    0.038
-##     q                -0.002    0.001   -2.352    0.019
+##     s                -0.003    0.006   -0.607    0.544
+##     q                 0.000    0.001    0.057    0.955
 ##   s ~~
-##     q                -0.002    0.001   -2.583    0.010
+##     q                -0.002    0.001   -2.239    0.025
 ## 
 ## Intercepts:
-##     W0LIFE.SAT        0.000
-##     W1LIFE.SAT        0.000
-##     W2LIFE.SAT        0.000
-##     W3LIFE.SAT        0.000
-##     W4LIFE.SAT        0.000
-##     W5LIFE.SAT        0.000
-##     i                 3.563    0.007  496.734    0.000
-##     s                 0.003    0.006    0.544    0.587
-##     q                -0.006    0.002   -3.936    0.000
+##     s         (b)     0.003    0.007    0.401    0.689
+##     q         (c)    -0.004    0.001   -3.063    0.002
+##     W0LIFE.SA         0.000
+##     W1LIFE.SA         0.000
+##     W2LIFE.SA         0.000
+##     W3LIFE.SA         0.000
+##     W4LIFE.SA         0.000
+##     W5LIFE.SA         0.000
+##     i                 3.568    0.009  398.023    0.000
 ## 
 ## Variances:
-##     W0LIFE.SAT        0.158    0.007
+##     W0LIFE.SAT        0.156    0.008
 ##     W1LIFE.SAT        0.151    0.005
-##     W2LIFE.SAT        0.147    0.005
-##     W3LIFE.SAT        0.140    0.005
+##     W2LIFE.SAT        0.148    0.005
+##     W3LIFE.SAT        0.141    0.005
 ##     W4LIFE.SAT        0.137    0.005
-##     W5LIFE.SAT        0.140    0.010
-##     i                 0.101    0.004
-##     s                 0.009    0.003
-##     q                 0.001    0.000
+##     W5LIFE.SAT        0.145    0.009
+##     i                 0.101    0.008
+##     s                 0.013    0.005
+##     q                 0.000    0.000
 ```
 
 ```
-## lavaan (0.5-15) converged normally after  80 iterations
+##      chisq df    cfi    tli   rmsea
+## [1,] 63.51 16 0.9869 0.9877 0.03209
+## [2,] 37.86 12 0.9928 0.9911 0.02734
+## [3,] 48.89 15 0.9907 0.9869 0.02799
+```
+
+```
+## lavaan (0.5-16) converged normally after 103 iterations
 ## 
 ##   Number of observations                          2883
 ## 
 ##   Number of missing patterns                        16
 ## 
 ##   Estimator                                         ML
-##   Minimum Function Test Statistic               43.809
+##   Minimum Function Test Statistic               48.890
 ##   Degrees of freedom                                15
 ##   P-value (Chi-square)                           0.000
 ## 
@@ -173,56 +187,60 @@ Group Parameters significant for Life Satisfaction so this model is plotted at t
 ##     W4LIFE.SAT        1.000
 ##     W5LIFE.SAT        1.000
 ##   s =~
-##     W0LIFE.SAT       -1.000
-##     W1LIFE.SAT        0.000
-##     W2LIFE.SAT        1.000
-##     W3LIFE.SAT        2.000
-##     W4LIFE.SAT        3.000
-##     W5LIFE.SAT        4.000
+##     W0LIFE.SAT        0.000
+##     W1LIFE.SAT        1.000
+##     W2LIFE.SAT        2.000
+##     W3LIFE.SAT        3.000
+##     W4LIFE.SAT        4.000
+##     W5LIFE.SAT        5.000
 ##   q =~
-##     W0LIFE.SAT       -1.000
-##     W1LIFE.SAT        0.000
-##     W2LIFE.SAT        1.000
-##     W3LIFE.SAT        4.000
-##     W4LIFE.SAT        9.000
-##     W5LIFE.SAT       16.000
+##     W0LIFE.SAT        0.000
+##     W1LIFE.SAT        1.000
+##     W2LIFE.SAT        4.000
+##     W3LIFE.SAT        9.000
+##     W4LIFE.SAT       16.000
+##     W5LIFE.SAT       25.000
 ## 
 ## Regressions:
 ##   i ~
-##     group             0.017    0.009    2.011    0.044
+##     group             0.010    0.011    0.964    0.335
 ##   s ~
-##     group             0.006    0.007    0.942    0.346
+##     group    (g1)     0.013    0.008    1.530    0.126
 ##   q ~
-##     group            -0.003    0.002   -1.554    0.120
+##     group    (g2)    -0.003    0.002   -2.033    0.042
 ## 
 ## Covariances:
 ##   i ~~
-##     s                 0.005    0.002    2.047    0.041
-##     q                -0.002    0.001   -2.307    0.021
+##     s                -0.003    0.006   -0.611    0.541
+##     q                 0.000    0.001    0.062    0.951
 ##   s ~~
-##     q                -0.002    0.001   -2.534    0.011
+##     q                -0.002    0.001   -2.174    0.030
 ## 
 ## Intercepts:
-##     W0LIFE.SAT        0.000
-##     W1LIFE.SAT        0.000
-##     W2LIFE.SAT        0.000
-##     W3LIFE.SAT        0.000
-##     W4LIFE.SAT        0.000
-##     W5LIFE.SAT        0.000
-##     i                 3.573    0.009  413.449    0.000
-##     s                 0.007    0.007    1.002    0.317
-##     q                -0.008    0.002   -4.130    0.000
+##     s         (b)     0.010    0.008    1.213    0.225
+##     q         (c)    -0.006    0.002   -3.691    0.000
+##     W0LIFE.SA         0.000
+##     W1LIFE.SA         0.000
+##     W2LIFE.SA         0.000
+##     W3LIFE.SA         0.000
+##     W4LIFE.SA         0.000
+##     W5LIFE.SA         0.000
+##     i                 3.574    0.011  331.468    0.000
 ## 
 ## Variances:
-##     W0LIFE.SAT        0.158    0.007
-##     W1LIFE.SAT        0.151    0.005
-##     W2LIFE.SAT        0.147    0.005
-##     W3LIFE.SAT        0.140    0.005
+##     W0LIFE.SAT        0.156    0.008
+##     W1LIFE.SAT        0.150    0.005
+##     W2LIFE.SAT        0.148    0.005
+##     W3LIFE.SAT        0.141    0.005
 ##     W4LIFE.SAT        0.137    0.005
-##     W5LIFE.SAT        0.140    0.010
-##     i                 0.101    0.004
-##     s                 0.009    0.003
-##     q                 0.001    0.000
+##     W5LIFE.SAT        0.146    0.009
+##     i                 0.101    0.008
+##     s                 0.013    0.005
+##     q                 0.000    0.000
+## 
+## Defined parameters:
+##     tpG1             -0.489    1.708   -0.286    0.775
+##     tpG2              1.233    0.449    2.743    0.006
 ```
 
 ```
@@ -239,7 +257,9 @@ Group Parameters significant for Life Satisfaction so this model is plotted at t
 ##   0.000000   0.088189   0.160630   0.206299   0.314961   0.001575
 ```
 
-![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3.png) 
+![plot of chunk lifeSat](figure/lifeSat.png) 
+
+[top](#top)
 
 <a name="careerPros"></a>
 CFA Growth - Career Prospects
@@ -250,28 +270,28 @@ Group Parameters not significant for Life Satisfaction so pooled model is plotte
 ```
 ##       chisq df    cfi    tli   rmsea
 ## [1,] 183.39 16 0.9275 0.9321 0.06024
-## [2,]  47.04 12 0.9848 0.9810 0.03183
+## [2,]  52.91 12 0.9823 0.9779 0.03439
 ```
 
 ```
 ## Chi Square Difference Test
 ## 
 ##      Df   AIC   BIC Chisq Chisq diff Df diff Pr(>Chisq)    
-## fitQ 12 24456 24546    47                                  
-## fitL 16 24584 24650   183        136       4     <2e-16 ***
+## fitQ 12 24462 24551  52.9                                  
+## fitL 16 24584 24650 183.4        130       4     <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 ```
-## lavaan (0.5-15) converged normally after  91 iterations
+## lavaan (0.5-16) converged normally after  81 iterations
 ## 
 ##   Number of observations                          2883
 ## 
 ##   Number of missing patterns                        30
 ## 
 ##   Estimator                                         ML
-##   Minimum Function Test Statistic               47.040
+##   Minimum Function Test Statistic               52.906
 ##   Degrees of freedom                                12
 ##   P-value (Chi-square)                           0.000
 ## 
@@ -290,59 +310,59 @@ Group Parameters not significant for Life Satisfaction so pooled model is plotte
 ##     W4CAREER.PROS     1.000
 ##     W5CAREER.PROS     1.000
 ##   s =~
-##     W0CAREER.PROS    -1.000
-##     W1CAREER.PROS     0.000
-##     W2CAREER.PROS     1.000
-##     W3CAREER.PROS     2.000
-##     W4CAREER.PROS     3.000
-##     W5CAREER.PROS     4.000
+##     W0CAREER.PROS     0.000
+##     W1CAREER.PROS     1.000
+##     W2CAREER.PROS     2.000
+##     W3CAREER.PROS     3.000
+##     W4CAREER.PROS     4.000
+##     W5CAREER.PROS     5.000
 ##   q =~
-##     W0CAREER.PROS    -1.000
-##     W1CAREER.PROS     0.000
-##     W2CAREER.PROS     1.000
-##     W3CAREER.PROS     4.000
-##     W4CAREER.PROS     9.000
-##     W5CAREER.PROS    16.000
+##     W0CAREER.PROS     0.000
+##     W1CAREER.PROS     1.000
+##     W2CAREER.PROS     4.000
+##     W3CAREER.PROS     9.000
+##     W4CAREER.PROS    16.000
+##     W5CAREER.PROS    25.000
 ## 
 ## Covariances:
 ##   i ~~
-##     s                 0.009    0.003    2.557    0.011
-##     q                -0.003    0.001   -3.750    0.000
+##     s                -0.019    0.008   -2.292    0.022
+##     q                 0.002    0.001    1.552    0.121
 ##   s ~~
-##     q                -0.007    0.001   -6.083    0.000
+##     q                -0.008    0.001   -5.894    0.000
 ## 
 ## Intercepts:
-##     W0CAREER.PROS     0.000
-##     W1CAREER.PROS     0.000
-##     W2CAREER.PROS     0.000
-##     W3CAREER.PROS     0.000
-##     W4CAREER.PROS     0.000
-##     W5CAREER.PROS     0.000
-##     i                 3.371    0.008  440.773    0.000
-##     s                 0.050    0.007    7.172    0.000
-##     q                -0.016    0.002   -7.713    0.000
+##     s         (b)     0.060    0.009    6.966    0.000
+##     q         (c)    -0.012    0.002   -7.310    0.000
+##     W0CAREER.         0.000
+##     W1CAREER.         0.000
+##     W2CAREER.         0.000
+##     W3CAREER.         0.000
+##     W4CAREER.         0.000
+##     W5CAREER.         0.000
+##     i                 3.333    0.010  329.474    0.000
 ## 
 ## Variances:
-##     W0CAREER.PROS     0.223    0.010
-##     W1CAREER.PROS     0.206    0.007
-##     W2CAREER.PROS     0.191    0.007
-##     W3CAREER.PROS     0.197    0.007
-##     W4CAREER.PROS     0.228    0.008
-##     W5CAREER.PROS     0.167    0.016
-##     i                 0.103    0.005
-##     s                 0.028    0.004
-##     q                 0.003    0.000
+##     W0CAREER.PROS     0.216    0.012
+##     W1CAREER.PROS     0.203    0.007
+##     W2CAREER.PROS     0.192    0.007
+##     W3CAREER.PROS     0.201    0.007
+##     W4CAREER.PROS     0.227    0.008
+##     W5CAREER.PROS     0.184    0.014
+##     i                 0.113    0.011
+##     s                 0.043    0.007
+##     q                 0.002    0.000
 ```
 
 ```
-## lavaan (0.5-15) converged normally after  94 iterations
+## lavaan (0.5-16) converged normally after  84 iterations
 ## 
 ##   Number of observations                          2883
 ## 
 ##   Number of missing patterns                        30
 ## 
 ##   Estimator                                         ML
-##   Minimum Function Test Statistic               49.045
+##   Minimum Function Test Statistic               54.005
 ##   Degrees of freedom                                15
 ##   P-value (Chi-square)                           0.000
 ## 
@@ -361,56 +381,60 @@ Group Parameters not significant for Life Satisfaction so pooled model is plotte
 ##     W4CAREER.PROS     1.000
 ##     W5CAREER.PROS     1.000
 ##   s =~
-##     W0CAREER.PROS    -1.000
-##     W1CAREER.PROS     0.000
-##     W2CAREER.PROS     1.000
-##     W3CAREER.PROS     2.000
-##     W4CAREER.PROS     3.000
-##     W5CAREER.PROS     4.000
+##     W0CAREER.PROS     0.000
+##     W1CAREER.PROS     1.000
+##     W2CAREER.PROS     2.000
+##     W3CAREER.PROS     3.000
+##     W4CAREER.PROS     4.000
+##     W5CAREER.PROS     5.000
 ##   q =~
-##     W0CAREER.PROS    -1.000
-##     W1CAREER.PROS     0.000
-##     W2CAREER.PROS     1.000
-##     W3CAREER.PROS     4.000
-##     W4CAREER.PROS     9.000
-##     W5CAREER.PROS    16.000
+##     W0CAREER.PROS     0.000
+##     W1CAREER.PROS     1.000
+##     W2CAREER.PROS     4.000
+##     W3CAREER.PROS     9.000
+##     W4CAREER.PROS    16.000
+##     W5CAREER.PROS    25.000
 ## 
 ## Regressions:
 ##   i ~
-##     group            -0.011    0.009   -1.173    0.241
+##     group            -0.030    0.012   -2.501    0.012
 ##   s ~
-##     group             0.022    0.008    2.599    0.009
+##     group    (g1)     0.029    0.010    2.749    0.006
 ##   q ~
-##     group            -0.006    0.002   -2.382    0.017
+##     group    (g2)    -0.005    0.002   -2.547    0.011
 ## 
 ## Covariances:
 ##   i ~~
-##     s                 0.009    0.003    2.570    0.010
-##     q                -0.003    0.001   -3.768    0.000
+##     s                -0.018    0.008   -2.267    0.023
+##     q                 0.002    0.001    1.520    0.128
 ##   s ~~
-##     q                -0.007    0.001   -6.054    0.000
+##     q                -0.008    0.001   -5.866    0.000
 ## 
 ## Intercepts:
-##     W0CAREER.PROS     0.000
-##     W1CAREER.PROS     0.000
-##     W2CAREER.PROS     0.000
-##     W3CAREER.PROS     0.000
-##     W4CAREER.PROS     0.000
-##     W5CAREER.PROS     0.000
-##     i                 3.365    0.009  364.855    0.000
-##     s                 0.063    0.008    7.386    0.000
-##     q                -0.019    0.002   -7.677    0.000
+##     s         (b)     0.076    0.010    7.303    0.000
+##     q         (c)    -0.015    0.002   -7.450    0.000
+##     W0CAREER.         0.000
+##     W1CAREER.         0.000
+##     W2CAREER.         0.000
+##     W3CAREER.         0.000
+##     W4CAREER.         0.000
+##     W5CAREER.         0.000
+##     i                 3.316    0.012  272.383    0.000
 ## 
 ## Variances:
-##     W0CAREER.PROS     0.223    0.010
-##     W1CAREER.PROS     0.206    0.007
+##     W0CAREER.PROS     0.215    0.012
+##     W1CAREER.PROS     0.203    0.007
 ##     W2CAREER.PROS     0.191    0.007
-##     W3CAREER.PROS     0.197    0.007
-##     W4CAREER.PROS     0.228    0.008
-##     W5CAREER.PROS     0.167    0.016
-##     i                 0.103    0.005
-##     s                 0.028    0.004
-##     q                 0.003    0.000
+##     W3CAREER.PROS     0.201    0.007
+##     W4CAREER.PROS     0.227    0.008
+##     W5CAREER.PROS     0.184    0.014
+##     i                 0.113    0.011
+##     s                 0.043    0.007
+##     q                 0.002    0.000
+## 
+## Defined parameters:
+##     tpG1              2.362    0.154   15.330    0.000
+##     tpG2              2.556    0.147   17.399    0.000
 ```
 
 ```
@@ -431,8 +455,9 @@ Group Parameters not significant for Life Satisfaction so pooled model is plotte
 ##      0.009449
 ```
 
-![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4.png) 
+![plot of chunk careerPros](figure/careerPros.png) 
 
+[top](#top)
 
 <a name="futPros"></a>
 CFA Growth - Future Prospects
@@ -443,30 +468,30 @@ Group Parameters not significant for Life Satisfaction so pooled model is plotte
 ```
 ##       chisq df    cfi    tli   rmsea
 ## [1,] 86.236 16 0.9716 0.9734 0.03902
-## [2,]  6.743 12 1.0000 1.0027 0.00000
+## [2,]  6.061 12 1.0000 1.0030 0.00000
 ```
 
 ```
 ## Chi Square Difference Test
 ## 
 ##      Df   AIC   BIC Chisq Chisq diff Df diff Pr(>Chisq)    
-## fitQ 12 21531 21620  6.74                                  
-## fitL 16 21602 21668 86.24       79.5       4    2.2e-16 ***
+## fitQ 12 21530 21619  6.06                                  
+## fitL 16 21602 21668 86.24       80.2       4     <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 ```
-## lavaan (0.5-15) converged normally after  95 iterations
+## lavaan (0.5-16) converged normally after  88 iterations
 ## 
 ##   Number of observations                          2883
 ## 
 ##   Number of missing patterns                        32
 ## 
 ##   Estimator                                         ML
-##   Minimum Function Test Statistic                6.743
+##   Minimum Function Test Statistic                6.061
 ##   Degrees of freedom                                12
-##   P-value (Chi-square)                           0.874
+##   P-value (Chi-square)                           0.913
 ## 
 ## Parameter estimates:
 ## 
@@ -483,61 +508,61 @@ Group Parameters not significant for Life Satisfaction so pooled model is plotte
 ##     W4FUTURE.PROS     1.000
 ##     W5FUTURE.PROS     1.000
 ##   s =~
-##     W0FUTURE.PROS    -1.000
-##     W1FUTURE.PROS     0.000
-##     W2FUTURE.PROS     1.000
-##     W3FUTURE.PROS     2.000
-##     W4FUTURE.PROS     3.000
-##     W5FUTURE.PROS     4.000
+##     W0FUTURE.PROS     0.000
+##     W1FUTURE.PROS     1.000
+##     W2FUTURE.PROS     2.000
+##     W3FUTURE.PROS     3.000
+##     W4FUTURE.PROS     4.000
+##     W5FUTURE.PROS     5.000
 ##   q =~
-##     W0FUTURE.PROS    -1.000
-##     W1FUTURE.PROS     0.000
-##     W2FUTURE.PROS     1.000
-##     W3FUTURE.PROS     4.000
-##     W4FUTURE.PROS     9.000
-##     W5FUTURE.PROS    16.000
+##     W0FUTURE.PROS     0.000
+##     W1FUTURE.PROS     1.000
+##     W2FUTURE.PROS     4.000
+##     W3FUTURE.PROS     9.000
+##     W4FUTURE.PROS    16.000
+##     W5FUTURE.PROS    25.000
 ## 
 ## Covariances:
 ##   i ~~
-##     s                 0.006    0.003    2.019    0.043
-##     q                -0.002    0.001   -2.977    0.003
+##     s                -0.014    0.007   -2.078    0.038
+##     q                 0.002    0.001    1.437    0.151
 ##   s ~~
-##     q                -0.005    0.001   -4.892    0.000
+##     q                -0.005    0.001   -4.793    0.000
 ## 
 ## Intercepts:
-##     W0FUTURE.PROS     0.000
-##     W1FUTURE.PROS     0.000
-##     W2FUTURE.PROS     0.000
-##     W3FUTURE.PROS     0.000
-##     W4FUTURE.PROS     0.000
-##     W5FUTURE.PROS     0.000
-##     i                 3.395    0.007  472.384    0.000
-##     s                 0.044    0.006    6.860    0.000
-##     q                -0.010    0.002   -5.715    0.000
+##     s         (b)     0.052    0.008    6.655    0.000
+##     q         (c)    -0.009    0.002   -5.663    0.000
+##     W0FUTURE.         0.000
+##     W1FUTURE.         0.000
+##     W2FUTURE.         0.000
+##     W3FUTURE.         0.000
+##     W4FUTURE.         0.000
+##     W5FUTURE.         0.000
+##     i                 3.358    0.009  353.857    0.000
 ## 
 ## Variances:
-##     W0FUTURE.PROS     0.197    0.009
-##     W1FUTURE.PROS     0.176    0.006
+##     W0FUTURE.PROS     0.191    0.010
+##     W1FUTURE.PROS     0.174    0.006
 ##     W2FUTURE.PROS     0.169    0.006
-##     W3FUTURE.PROS     0.179    0.007
+##     W3FUTURE.PROS     0.181    0.006
 ##     W4FUTURE.PROS     0.158    0.006
-##     W5FUTURE.PROS     0.145    0.012
-##     i                 0.092    0.004
-##     s                 0.019    0.004
-##     q                 0.002    0.000
+##     W5FUTURE.PROS     0.152    0.010
+##     i                 0.100    0.010
+##     s                 0.030    0.006
+##     q                 0.001    0.000
 ```
 
 ```
-## lavaan (0.5-15) converged normally after  95 iterations
+## lavaan (0.5-16) converged normally after  88 iterations
 ## 
 ##   Number of observations                          2883
 ## 
 ##   Number of missing patterns                        32
 ## 
 ##   Estimator                                         ML
-##   Minimum Function Test Statistic                6.743
+##   Minimum Function Test Statistic                6.061
 ##   Degrees of freedom                                12
-##   P-value (Chi-square)                           0.874
+##   P-value (Chi-square)                           0.913
 ## 
 ## Parameter estimates:
 ## 
@@ -554,48 +579,48 @@ Group Parameters not significant for Life Satisfaction so pooled model is plotte
 ##     W4FUTURE.PROS     1.000
 ##     W5FUTURE.PROS     1.000
 ##   s =~
-##     W0FUTURE.PROS    -1.000
-##     W1FUTURE.PROS     0.000
-##     W2FUTURE.PROS     1.000
-##     W3FUTURE.PROS     2.000
-##     W4FUTURE.PROS     3.000
-##     W5FUTURE.PROS     4.000
+##     W0FUTURE.PROS     0.000
+##     W1FUTURE.PROS     1.000
+##     W2FUTURE.PROS     2.000
+##     W3FUTURE.PROS     3.000
+##     W4FUTURE.PROS     4.000
+##     W5FUTURE.PROS     5.000
 ##   q =~
-##     W0FUTURE.PROS    -1.000
-##     W1FUTURE.PROS     0.000
-##     W2FUTURE.PROS     1.000
-##     W3FUTURE.PROS     4.000
-##     W4FUTURE.PROS     9.000
-##     W5FUTURE.PROS    16.000
+##     W0FUTURE.PROS     0.000
+##     W1FUTURE.PROS     1.000
+##     W2FUTURE.PROS     4.000
+##     W3FUTURE.PROS     9.000
+##     W4FUTURE.PROS    16.000
+##     W5FUTURE.PROS    25.000
 ## 
 ## Covariances:
 ##   i ~~
-##     s                 0.006    0.003    2.019    0.043
-##     q                -0.002    0.001   -2.977    0.003
+##     s                -0.014    0.007   -2.078    0.038
+##     q                 0.002    0.001    1.437    0.151
 ##   s ~~
-##     q                -0.005    0.001   -4.892    0.000
+##     q                -0.005    0.001   -4.793    0.000
 ## 
 ## Intercepts:
-##     W0FUTURE.PROS     0.000
-##     W1FUTURE.PROS     0.000
-##     W2FUTURE.PROS     0.000
-##     W3FUTURE.PROS     0.000
-##     W4FUTURE.PROS     0.000
-##     W5FUTURE.PROS     0.000
-##     i                 3.395    0.007  472.384    0.000
-##     s                 0.044    0.006    6.860    0.000
-##     q                -0.010    0.002   -5.715    0.000
+##     s         (b)     0.052    0.008    6.655    0.000
+##     q         (c)    -0.009    0.002   -5.663    0.000
+##     W0FUTURE.         0.000
+##     W1FUTURE.         0.000
+##     W2FUTURE.         0.000
+##     W3FUTURE.         0.000
+##     W4FUTURE.         0.000
+##     W5FUTURE.         0.000
+##     i                 3.358    0.009  353.857    0.000
 ## 
 ## Variances:
-##     W0FUTURE.PROS     0.197    0.009
-##     W1FUTURE.PROS     0.176    0.006
+##     W0FUTURE.PROS     0.191    0.010
+##     W1FUTURE.PROS     0.174    0.006
 ##     W2FUTURE.PROS     0.169    0.006
-##     W3FUTURE.PROS     0.179    0.007
+##     W3FUTURE.PROS     0.181    0.006
 ##     W4FUTURE.PROS     0.158    0.006
-##     W5FUTURE.PROS     0.145    0.012
-##     i                 0.092    0.004
-##     s                 0.019    0.004
-##     q                 0.002    0.000
+##     W5FUTURE.PROS     0.152    0.010
+##     i                 0.100    0.010
+##     s                 0.030    0.006
+##     q                 0.001    0.000
 ```
 
 ```
@@ -612,5 +637,107 @@ Group Parameters not significant for Life Satisfaction so pooled model is plotte
 ##      0.006299      0.092913      0.166929      0.207874      0.318110
 ```
 
-![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5.png) 
+![plot of chunk futurePros](figure/futurePros.png) 
 
+[top](#top)
+
+Extract Matching Variables
+----------------------------
+
+```r
+# Single item key|value pairs
+baseData <- dbGetQuery(LSAY, "SELECT * FROM Student2003")
+WaveAdict_singleitem <- list(id = "id", stateid = "State territory", loc = "location class", 
+    sex = "gender", sisced = "education expectations", indig = "indigenous status", 
+    laa005 = "ed plans", laa006 = "parent ed plaan", escs = "ses index from pisa results", 
+    laa007 = "friend ed plan", laa010 = "work experience", laa025 = "social comparison english", 
+    laa026 = "social comparison english", laa027 = "social comparison total", 
+    xcsl2003 = "grade", lad001 = "work", xhrs2003 = "average hrs worked", xwkp2003 = "weekly wage", 
+    xath2003 = "live parents", belong = "sense of belonging", intmat = "interest in math", 
+    instmot = "intrinsic motivation", matheff = "self-efficacy", anxmat = "anxiety", 
+    scmat = "self-concept", complrn = "competative", cooplrn = "cooperative", 
+    teachsup = "teacher support", disclim = "discipline climate")
+
+# Multi item scal and index item key|value pairs
+WaveAdict_multiitem <- list(pv1 = "plausible values for achievement - First", 
+    HRS = "hours how spent per week - 6 item", st30q = "Attitudes toward education career - 8 item")
+
+## Print Scale descriptions and items flags
+print("Single Item scales")
+```
+
+```
+## [1] "Single Item scales"
+```
+
+```r
+for (i in seq_along(WaveAdict_singleitem)) {
+    cat(paste(names(WaveAdict_singleitem)[i], WaveAdict_singleitem[[i]][1], 
+        sep = ":\t"), sep = "\n")
+}
+```
+
+```
+## id:	id
+## stateid:	State territory
+## loc:	location class
+## sex:	gender
+## sisced:	education expectations
+## indig:	indigenous status
+## laa005:	ed plans
+## laa006:	parent ed plaan
+## escs:	ses index from pisa results
+## laa007:	friend ed plan
+## laa010:	work experience
+## laa025:	social comparison english
+## laa026:	social comparison english
+## laa027:	social comparison total
+## xcsl2003:	grade
+## lad001:	work
+## xhrs2003:	average hrs worked
+## xwkp2003:	weekly wage
+## xath2003:	live parents
+## belong:	sense of belonging
+## intmat:	interest in math
+## instmot:	intrinsic motivation
+## matheff:	self-efficacy
+## anxmat:	anxiety
+## scmat:	self-concept
+## complrn:	competative
+## cooplrn:	cooperative
+## teachsup:	teacher support
+## disclim:	discipline climate
+```
+
+```r
+print("Multi Item scales")
+```
+
+```
+## [1] "Multi Item scales"
+```
+
+```r
+for (i in seq_along(WaveAdict_multiitem)) {
+    cat(paste(names(WaveAdict_multiitem)[i], WaveAdict_multiitem[[i]][1], sep = ":\t"), 
+        sep = "\n")
+}
+```
+
+```
+## pv1:	plausible values for achievement - First
+## HRS:	hours how spent per week - 6 item
+## st30q:	Attitudes toward education career - 8 item
+```
+
+```r
+# extraction of multi item locations
+baseLocations <- paste0(paste0("^(", paste(names(WaveAdict_multiitem), collapse = "|"), 
+    ")", ".*$"))
+FeatureIndex <- grep(baseLocations, names(baseData), value = TRUE)
+# Analaysis database is reduction from full lsay data
+matchData <- data.frame(baseData[, names(WaveAdict_singleitem)], baseData[, 
+    FeatureIndex])
+```
+
+[top](#top)

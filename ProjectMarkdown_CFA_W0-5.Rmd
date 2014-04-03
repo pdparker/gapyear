@@ -1,5 +1,6 @@
 Gap Years in Australia: Effects on Multidimensional Life Satisfaction
 ========================================================
+<a name="top"></a>
 
 Contents:
 
@@ -74,6 +75,8 @@ Defer$returners <- ifelse(Defer$xbac2005<4|
 ```
 
 The number of adolescence who directly entered university after high-school was ***`r nrow(UniversityEntrant)`***. The number of adolescents that took a gap-year (offered further education but defered) was ***`r nrow(Defer)`***. Of the direct entrants, those who withdraw from further education in the direct entrant group were ***`r table(UniversityEntrant$dropOut)[2]`***. For ther gap-year group, those who eventually returned to further education were ***`r table(Defer$returners)[2]`***.
+
+[top](#top)
 
 <a name="cohort"></a>
 Cohort Sequence Design
@@ -171,8 +174,6 @@ for (i in 0:(length(UniversityEntrantSplit)-1)){
                   names(UniversityEntrant))] <-paste0("W", (1:7)-i, "LIFE.SAT")
   names(UniversityEntrantSplit[[i+1]])[grep("^xbac20(04|05|06|07|08|09|10)$",
                  names(UniversityEntrant))] <-paste0("W", (1:7)-i, "STATUS")
-  #names(UniversityEntrantSplit[[i+1]])[grep("lbca24|lcca30|ldca30|leca030|lfca020|lgca020|lhca038",
-   #               names(UniversityEntrant))] <-paste0("W", (1:7)-i, "STATUS")
   }
 library(plyr)
 UniversityEntrant2 <- rbind.fill(lapply(UniversityEntrantSplit,function(y){as.data.frame(y)}))
@@ -225,29 +226,62 @@ Defer2 <- rbind.fill(lapply(DeferSplit,function(y){as.data.frame(y)}))
 ######
 ```
 
+```{r helperFun, echo=FALSE}
+FunPlot_Multi <- function(model=fitQG, data=lifeSat, main="Life Satisfaction", paras){
+  #Observed Means
+  MGS1 <- apply(data[data$group==-1,1:6], 2, mean, na.rm=TRUE)
+  MGS2 <- apply(data[data$group==1,1:6], 2, mean, na.rm=TRUE)
+  #Observed Trend
+  plot(0:5, MGS1[c(6,1:5)], type="l", lty=2, col="blue",
+       ylab="Growth", xlab="Years Since Graduation", main=main,
+       ylim=c(min(c(MGS1, MGS2))-.01, max(c(MGS1, MGS2))+.01)
+      )
+  f1 <- function(x) {(paras[1]+paras[4]*-1) + (paras[2]*x+paras[5]*x*-1) + 
+                       (paras[3]*x^2+paras[6]*x^2*-1)}
+  curve(f1, 0,5,col="blue", add=TRUE)
+  f2 <- function(x) {(paras[1]+paras[4]*1) + (paras[2]*x+paras[5]*x*1) + 
+                       (paras[3]*x^2+paras[6]*x^2*1)}
+  curve(f2, 0,5,col="red", add=TRUE)
+  points(0:5, MGS2[c(6,1:5)], col="red", type="l", lty=2)
+}
+
+
+Model_Fun <- function(name="LIFE.SAT", 
+                      params = list(i=TRUE,s=TRUE,q=TRUE,ig=TRUE,sg=TRUE,qg=TRUE)){
+  i = ' i =~ 1*W0temp+1*W1temp+1*W2temp+1*W3temp+1*W4temp+1*W5temp'
+  s = 's =~ 0*W0temp+1*W1temp+2*W2temp+3*W3temp+4*W4temp+5*W5temp
+  s ~ b*1'
+  q = 'q =~ 0*W0temp+1*W1temp+4*W2temp+9*W3temp+16*W4temp+25*W5temp
+  q ~ c*1'
+  ig = 'i ~ group'
+  sg = 's ~ g1*group'
+  qg = 'q ~ g2*group
+  tpG1 := -1*(b - g1)/(2 * (c - g2))
+  tpG2 := -1*(b + g1)/(2 * (c + g2))'
+  lines <- c(i,s,q,ig,sg,qg)
+  out <- paste(lines[do.call(c, params)], collapse="\n")
+  out <- gsub("temp", name, out)
+  out
+}
+```
+[top](#top)
+
 <a name="lifeSat"></a>
 CFA Growth - Life Satisfaction
 -----------------------
 
 Group Parameters significant for Life Satisfaction so this model is plotted at the end of this section.
 
-```{r echo=FALSE, warning=FALSE, message=FALSE}
+```{r lifeSat, echo=FALSE, warning=FALSE, message=FALSE}
 library(lavaan)
-#cat(grep("LIFE.SAT", names(UniversityEntrant2), value=TRUE), sep="+")
-
 lifeSat<-rbind(UniversityEntrant2[,grep("W[0-5]LIFE.SAT", names(UniversityEntrant2))],
               Defer2[, grep("W[0-5]LIFE.SAT", names(Defer2))])
 lifeSat$group <- c(rep(-1, nrow(UniversityEntrant2)), rep(1, nrow(Defer2)))
 #Linear
-m_linear <- ' i =~ 1*W0LIFE.SAT+1*W1LIFE.SAT+1*W2LIFE.SAT+1*W3LIFE.SAT+1*W4LIFE.SAT+1*W5LIFE.SAT
-              s =~ -1*W0LIFE.SAT+0*W1LIFE.SAT+1*W2LIFE.SAT+2*W3LIFE.SAT+3*W4LIFE.SAT+4*W5LIFE.SAT
-            '
+m_linear <- Model_Fun(name="LIFE.SAT", params = list(i=TRUE,s=TRUE,q=F,ig=F,sg=F,qg=F))
 fitL <- growth(m_linear, data=lifeSat, missing="fiml")
 #Quadratic
-m_quadratic <- ' i =~ 1*W0LIFE.SAT+1*W1LIFE.SAT+1*W2LIFE.SAT+1*W3LIFE.SAT+1*W4LIFE.SAT+1*W5LIFE.SAT
-              s =~ -1*W0LIFE.SAT+0*W1LIFE.SAT+1*W2LIFE.SAT+2*W3LIFE.SAT+3*W4LIFE.SAT+4*W5LIFE.SAT
-              q =~ -1*W0LIFE.SAT+0*W1LIFE.SAT+1*W2LIFE.SAT+4*W3LIFE.SAT+9*W4LIFE.SAT+16*W5LIFE.SAT                       
-'
+m_quadratic <- Model_Fun(name="LIFE.SAT", params = list(i=T,s=T,q=T,ig=F,sg=F,qg=F))
 fitQ <- growth(m_quadratic, data=lifeSat, missing="fiml")
 Fit <- rbind(fitMeasures(fitL)[c('chisq','df',"cfi",'tli', 'rmsea')], 
              fitMeasures(fitQ)[c('chisq','df',"cfi",'tli', 'rmsea')])
@@ -255,50 +289,34 @@ Fit
 anova(fitL, fitQ)
 summary(fitQ)
 #By Group
-mG_quadratic <- ' i =~ 1*W0LIFE.SAT+1*W1LIFE.SAT+1*W2LIFE.SAT+1*W3LIFE.SAT+1*W4LIFE.SAT+1*W5LIFE.SAT
-              s =~ -1*W0LIFE.SAT+0*W1LIFE.SAT+1*W2LIFE.SAT+2*W3LIFE.SAT+3*W4LIFE.SAT+4*W5LIFE.SAT
-              q =~ -1*W0LIFE.SAT+0*W1LIFE.SAT+1*W2LIFE.SAT+4*W3LIFE.SAT+9*W4LIFE.SAT+16*W5LIFE.SAT
-              i ~ group
-              s ~ g1*group
-              q ~ g2*group
-              s ~ b*1
-              q ~ c*1
-              tpG1 := -1*(b - g1)/(2 * (c - g2))  
-              tpG2 := -1*(b + g1)/(2 * (c + g2))  
-             '
+mG_quadratic <- Model_Fun(name="LIFE.SAT", params = list(i=T,s=T,q=T,ig=T,sg=T,qg=T))
 fitQG <- growth(mG_quadratic, data=lifeSat, missing="fiml")
 Fit <- rbind(Fit,  fitMeasures(fitQG)[c('chisq','df',"cfi",'tli', 'rmsea')])
+Fit
 summary(fitQG)
 ##plot
 cat("Percentage Missing:\n")
 apply(lifeSat[lifeSat$group==-1,1:6], 2, function(x) sum(is.na(x))/length(x))
 apply(lifeSat[lifeSat$group==1,1:6], 2, function(x) sum(is.na(x))/length(x))
-
-f1 <- function(x) {(3.573+.017*-1) + (.007*x-.006*x*-1) + (-.008*x^2+.003*x^2*-1)}
-curve(f1, 0,5,col="blue", ylab="Satisfaction", xlab="Years Since Graduation", main="Life Satisfaction", 
-      ylim=c(3.1,3.7))
-f2 <- function(x) {(3.573+.017*1) + (.007*x-.006*x*1) + (-.008*x^2+.003*x^2*1)}
-curve(f2, 0,5,col="red", add=TRUE, ylab="Satisfaction", xlab="Years Since Graduation", main="Life Satisfaction")
+paras<- parameterEstimates(fitQG)[c(44,13,20,21:23),"est"]
+FunPlot_Multi(model=fitQG, data=lifeSat, main="Life Satisfaction", paras)
 ```
+[top](#top)
+
 <a name="careerPros"></a>
 CFA Growth - Career Prospects
 -----------------------
 Group Parameters not significant for Life Satisfaction so pooled model is plotted at the end of this section.
 
-```{r echo=FALSE, warning=FALSE, message=FALSE}
+```{r careerPros, echo=FALSE, warning=FALSE, message=FALSE}
 careerPros<-rbind(UniversityEntrant2[,grep("W[0-5]CAREER.PROS", names(UniversityEntrant2))],
               Defer2[, grep("W[0-5]CAREER.PROS", names(Defer2))])
 careerPros$group <- c(rep(-1, nrow(UniversityEntrant2)), rep(1, nrow(Defer2)))
 #Linear
-m_linear <- ' i =~ 1*W0CAREER.PROS+1*W1CAREER.PROS+1*W2CAREER.PROS+1*W3CAREER.PROS+1*W4CAREER.PROS+1*W5CAREER.PROS
-              s =~ -1*W0CAREER.PROS+0*W1CAREER.PROS+1*W2CAREER.PROS+2*W3CAREER.PROS+3*W4CAREER.PROS+4*W5CAREER.PROS
-            '
+m_linear <- Model_Fun(name="CAREER.PROS", params = list(i=T,s=T,q=F,ig=F,sg=F,qg=F))
 fitL <- growth(m_linear, data=careerPros, missing="fiml")
 #Quadratic
-m_quadratic <- ' i =~ 1*W0CAREER.PROS+1*W1CAREER.PROS+1*W2CAREER.PROS+1*W3CAREER.PROS+1*W4CAREER.PROS+1*W5CAREER.PROS
-              s =~ -1*W0CAREER.PROS+0*W1CAREER.PROS+1*W2CAREER.PROS+2*W3CAREER.PROS+3*W4CAREER.PROS+4*W5CAREER.PROS
-              q =~ -1*W0CAREER.PROS+0*W1CAREER.PROS+1*W2CAREER.PROS+4*W3CAREER.PROS+9*W4CAREER.PROS+16*W5CAREER.PROS
-            '
+m_quadratic <- Model_Fun(name="CAREER.PROS", params = list(i=T,s=T,q=T,ig=F,sg=F,qg=F))
 fitQ <- growth(m_quadratic, data=careerPros, missing="fiml")
 Fit <- rbind(fitMeasures(fitL)[c('chisq','df',"cfi",'tli', 'rmsea')], 
              fitMeasures(fitQ)[c('chisq','df',"cfi",'tli', 'rmsea')])
@@ -306,45 +324,32 @@ Fit
 anova(fitL, fitQ)
 summary(fitQ)
 #By Group
-mG_quadratic <- 'i =~ 1*W0CAREER.PROS+1*W1CAREER.PROS+1*W2CAREER.PROS+1*W3CAREER.PROS+1*W4CAREER.PROS+1*W5CAREER.PROS
-              s =~ -1*W0CAREER.PROS+0*W1CAREER.PROS+1*W2CAREER.PROS+2*W3CAREER.PROS+3*W4CAREER.PROS+4*W5CAREER.PROS
-              q =~ -1*W0CAREER.PROS+0*W1CAREER.PROS+1*W2CAREER.PROS+4*W3CAREER.PROS+9*W4CAREER.PROS+16*W5CAREER.PROS
-              i ~ group
-              s ~ group
-              q ~ group
-             '
+mG_quadratic <- Model_Fun(name="CAREER.PROS", params = list(i=T,s=T,q=T,ig=T,sg=T,qg=T))
 fitQG <- growth(mG_quadratic, data=careerPros, missing="fiml")
 Fit <- rbind(Fit,  fitMeasures(fitQG)[c('chisq','df',"cfi",'tli', 'rmsea')])
 summary(fitQG)
 cat("Percentage Missing:\n")
 apply(careerPros[careerPros$group==-1,1:6], 2, function(x) sum(is.na(x))/length(x))
 apply(careerPros[careerPros$group==1,1:6], 2, function(x) sum(is.na(x))/length(x))
-f1 <- function(x) {(3.365 + -.011*-1) + (.063*x + .022*-1) + (-.019*x^2 - .006*-1)}
-curve(f1, 0,5,col="blue", ylab="Satisfaction", xlab="Years Since Graduation", 
-      main="Satisfaction With\nCareer Prospects", ylim=c(2.8,3.6))
-f1 <- function(x) {(3.365 + -.011*1) + (.063*x + .022*1) + (-.019*x^2 - .006*1)}
-curve(f2, 0,5,col="red", add=TRUE, ylab="Satisfaction", xlab="Years Since Graduation", main="Life Satisfaction")
+paras<- parameterEstimates(fitQG)[c(44,13,20,21:23),"est"]
+FunPlot_Multi(model=fitQG, data=careerPros, main="Career Prospects", paras)
 ```
+[top](#top)
 
 <a name="futPros"></a>
 CFA Growth - Future Prospects
 -----------------------
 Group Parameters not significant for Life Satisfaction so pooled model is plotted at the end of this section.
 
-```{r echo=FALSE, warning=FALSE, message=FALSE}
+```{r futurePros, echo=FALSE, warning=FALSE, message=FALSE}
 futPros<-rbind(UniversityEntrant2[,grep("W[0-5]FUTURE.PROS", names(UniversityEntrant2))],
               Defer2[, grep("W[0-5]FUTURE.PROS", names(Defer2))])
 futPros$group <- c(rep(-1, nrow(UniversityEntrant2)), rep(1, nrow(Defer2)))
 #Linear
-m_linear <- ' i =~ 1*W0FUTURE.PROS+1*W1FUTURE.PROS+1*W2FUTURE.PROS+1*W3FUTURE.PROS+1*W4FUTURE.PROS+1*W5FUTURE.PROS
-              s =~ -1*W0FUTURE.PROS+0*W1FUTURE.PROS+1*W2FUTURE.PROS+2*W3FUTURE.PROS+3*W4FUTURE.PROS+4*W5FUTURE.PROS
-            '
+m_linear <- Model_Fun(name="FUTURE.PROS", params = list(i=T,s=T,q=F,ig=F,sg=F,qg=F))
 fitL <- growth(m_linear, data=futPros, missing="fiml")
 #Quadratic
-m_quadratic <- 'i =~ 1*W0FUTURE.PROS+1*W1FUTURE.PROS+1*W2FUTURE.PROS+1*W3FUTURE.PROS+1*W4FUTURE.PROS+1*W5FUTURE.PROS
-              s =~ -1*W0FUTURE.PROS+0*W1FUTURE.PROS+1*W2FUTURE.PROS+2*W3FUTURE.PROS+3*W4FUTURE.PROS+4*W5FUTURE.PROS
-              q =~ -1*W0FUTURE.PROS+0*W1FUTURE.PROS+1*W2FUTURE.PROS+4*W3FUTURE.PROS+9*W4FUTURE.PROS+16*W5FUTURE.PROS
-            '
+m_quadratic <- Model_Fun(name="FUTURE.PROS", params = list(i=T,s=T,q=T,ig=F,sg=F,qg=F))
 fitQ <- growth(m_quadratic, data=futPros, missing="fiml")
 Fit <- rbind(fitMeasures(fitL)[c('chisq','df',"cfi",'tli', 'rmsea')], 
              fitMeasures(fitQ)[c('chisq','df',"cfi",'tli', 'rmsea')])
@@ -352,23 +357,17 @@ Fit
 anova(fitL, fitQ)
 summary(fitQ)
 #By Group
-mG_quadratic <- 'i =~ 1*W0FUTURE.PROS+1*W1FUTURE.PROS+1*W2FUTURE.PROS+1*W3FUTURE.PROS+1*W4FUTURE.PROS+1*W5FUTURE.PROS
-              s =~ -1*W0FUTURE.PROS+0*W1FUTURE.PROS+1*W2FUTURE.PROS+2*W3FUTURE.PROS+3*W4FUTURE.PROS+4*W5FUTURE.PROS
-              q =~ -1*W0FUTURE.PROS+0*W1FUTURE.PROS+1*W2FUTURE.PROS+4*W3FUTURE.PROS+9*W4FUTURE.PROS+16*W5FUTURE.PROS
-              i ~ group
-              s ~ group
-              q ~ group
-             '
+mG_quadratic <- Model_Fun(name="FUTURE.PROS", params = list(i=T,s=T,q=T,ig=T,sg=T,qg=T))
 fitQG <- growth(mG_quadratic, data=futPros, missing="fiml")
 Fit <- rbind(Fit,  fitMeasures(fitQG)[c('chisq','df',"cfi",'tli', 'rmsea')])
 summary(fitQ)
 cat("Percentage Missing:\n")
 apply(futPros[futPros$group==-1,1:5], 2, function(x) sum(is.na(x))/length(x))
 apply(futPros[futPros$group==1,1:5], 2, function(x) sum(is.na(x))/length(x))
-f1 <- function(x) {3.395 + .044*x-.01*x^2}
-curve(f1, 0,5,col="blue", ylab="Satisfaction", xlab="Years Since Graduation", 
-      main="Satisfaction With\nFuture Prospects")
+paras<- parameterEstimates(fitQG)[c(44,13,20,21:23),"est"]
+FunPlot_Multi(model=fitQG, data=futPros, main="Future Prospects", paras)
 ```
+[top](#top)
 
 Extract Matching Variables
 ----------------------------
@@ -413,4 +412,4 @@ FeatureIndex<-grep(baseLocations, names(baseData), value=TRUE)
 #Analaysis database is reduction from full lsay data
 matchData <- data.frame(baseData[,names(WaveAdict_singleitem)], baseData[, FeatureIndex])
 ```
-
+[top](#top)
