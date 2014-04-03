@@ -20,7 +20,10 @@ library(RSQLite)
 setwd("/Users/phparker/Dropbox/Databases/LSAY_DATSETS/")
 LSAY <- dbConnect(SQLite(), dbname="LSAY.sqlite")
 dbListTables(LSAY)
-meta <- dbGetQuery(LSAY, "SELECT * FROM META2003")
+###################
+#File Descriptions#
+###################
+#meta <- dbGetQuery(LSAY, "SELECT * FROM META2003")
 #####################
 #University Entrants#
 #####################
