@@ -16,7 +16,7 @@ SQL Data Munging
 Initial data-munging was done using a series of SQL queries. For direct further education entrants we took those who indicated that they had finished year 12 the year before and indicated that they were currently undertaking some form of teriary study. Gap year students were derived by taking those who had completed year 12 the year before and indicated that they had defered further education and/or confirmed the following year that they had defered further education in the year previous.
 
 Further education drop-outs were taking by exploring if in any of the years under investigation they indicated they had withdrawn from their teriary education course. Gap-year returners composed those who had, at any time during the period of investigation indicated that they currently undertaking teriary education. SQL queries underlying theis subsetting are in .Rmd file associated with this file.
-```{r echo=FALSE}
+```{r munging1, echo=FALSE}
 library(RSQLite)
 setwd("/Users/phparker/Dropbox/Databases/LSAY_DATSETS/")
 LSAY <- dbConnect(SQLite(), dbname="LSAY.sqlite")
@@ -99,7 +99,7 @@ The Satisfaction Items are (How satisfied are you with):
 * **LIFE.SAT** Your life as a whole
 
 Items in **bold** are the ones used in the analysis.
-```{r echo=FALSE}
+```{r munging2, echo=FALSE}
 UniversityEntrant$sinceHS <- with(UniversityEntrant, ifelse(xcsl2003==1,0,
                                                             ifelse(xcsl2004==1,1,
                                                               ifelse(xcsl2005==1,2,
@@ -287,13 +287,13 @@ Fit <- rbind(fitMeasures(fitL)[c('chisq','df',"cfi",'tli', 'rmsea')],
              fitMeasures(fitQ)[c('chisq','df',"cfi",'tli', 'rmsea')])
 Fit
 anova(fitL, fitQ)
-summary(fitQ)
+summary(fitQ, standardized=TRUE)
 #By Group
 mG_quadratic <- Model_Fun(name="LIFE.SAT", params = list(i=T,s=T,q=T,ig=T,sg=T,qg=T))
 fitQG <- growth(mG_quadratic, data=lifeSat, missing="fiml")
 Fit <- rbind(Fit,  fitMeasures(fitQG)[c('chisq','df',"cfi",'tli', 'rmsea')])
 Fit
-summary(fitQG)
+summary(fitQG, standardized=TRUE)
 ##plot
 cat("Percentage Missing:\n")
 apply(lifeSat[lifeSat$group==-1,1:6], 2, function(x) sum(is.na(x))/length(x))
@@ -322,12 +322,12 @@ Fit <- rbind(fitMeasures(fitL)[c('chisq','df',"cfi",'tli', 'rmsea')],
              fitMeasures(fitQ)[c('chisq','df',"cfi",'tli', 'rmsea')])
 Fit
 anova(fitL, fitQ)
-summary(fitQ)
+summary(fitQ, standardized=TRUE)
 #By Group
 mG_quadratic <- Model_Fun(name="CAREER.PROS", params = list(i=T,s=T,q=T,ig=T,sg=T,qg=T))
 fitQG <- growth(mG_quadratic, data=careerPros, missing="fiml")
 Fit <- rbind(Fit,  fitMeasures(fitQG)[c('chisq','df',"cfi",'tli', 'rmsea')])
-summary(fitQG)
+summary(fitQG, standardized=TRUE)
 cat("Percentage Missing:\n")
 apply(careerPros[careerPros$group==-1,1:6], 2, function(x) sum(is.na(x))/length(x))
 apply(careerPros[careerPros$group==1,1:6], 2, function(x) sum(is.na(x))/length(x))
@@ -360,7 +360,7 @@ summary(fitQ)
 mG_quadratic <- Model_Fun(name="FUTURE.PROS", params = list(i=T,s=T,q=T,ig=T,sg=T,qg=T))
 fitQG <- growth(mG_quadratic, data=futPros, missing="fiml")
 Fit <- rbind(Fit,  fitMeasures(fitQG)[c('chisq','df',"cfi",'tli', 'rmsea')])
-summary(fitQ)
+summary(fitQ, standardized=TRUE)
 cat("Percentage Missing:\n")
 apply(futPros[futPros$group==-1,1:5], 2, function(x) sum(is.na(x))/length(x))
 apply(futPros[futPros$group==1,1:5], 2, function(x) sum(is.na(x))/length(x))
@@ -374,22 +374,22 @@ Extract Matching Variables
 ```{r matchVar, echo=TRUE}
 #Single item key|value pairs
 baseData <- dbGetQuery(LSAY, "SELECT * FROM Student2003")
-WaveAdict_singleitem <- list(id = 'id', stateid = 'State territory', 
+WaveAdict_singleitem <- list(id = 'id', stateid = 'State territory', schoolid = 'School ID',
                              loc = 'location class', sex = 'gender',
                              sisced = 'education expectations', indig = 'indigenous status', 
                              laa005 = 'ed plans',
                              laa006 = 'parent ed plaan', escs = "ses index from pisa results",
                              laa007 = 'friend ed plan',
                              laa010 = 'work experience', laa025 = 'social comparison english',
-                             laa026 = 'social comparison english', laa027 = 'social comparison total',
+                             laa026 = 'social comparison english', 
+                             laa027 = 'social comparison total',
                              xcsl2003 = 'grade', lad001 = 'work', xhrs2003 = 'average hrs worked',
                              xwkp2003 = 'weekly wage', xath2003 = 'live parents',
                              belong = 'sense of belonging', intmat = 'interest in math',
                              instmot = 'intrinsic motivation', matheff = 'self-efficacy',
                              anxmat = 'anxiety', scmat = 'self-concept', complrn = 'competative',
                              cooplrn = 'cooperative', teachsup = 'teacher support',
-                             disclim = 'discipline climate'
-                             )
+                            disclim = 'discipline climate')
 
 #Multi item scal and index item key|value pairs    
 WaveAdict_multiitem<- list(pv1 = "plausible values for achievement - First",
@@ -411,5 +411,29 @@ baseLocations <- paste0(paste0("^(", paste(names(WaveAdict_multiitem),collapse="
 FeatureIndex<-grep(baseLocations, names(baseData), value=TRUE)
 #Analaysis database is reduction from full lsay data
 matchData <- data.frame(baseData[,names(WaveAdict_singleitem)], baseData[, FeatureIndex])
+#Amount of missing data
+apply(matchData,2, function(x) sum(is.na(x))/nrow(matchData))
+#Bind with analysis Data
+data <- rbind(UniversityEntrant2[,names(UniversityEntrant2)%in%names(Defer2)],
+              Defer2[,names(Defer2)%in%names(UniversityEntrant2)])
+data<- merge(data, matchData, by="id", all.x=TRUE)
+data <- data[, -c(grep("^W[6-7]|^W.[1-9]|.y$|xath2003|^pv[2-5]", names(data)))]
+data[,c("escs", "xhrs2003", "xwkp2003", "instmot", "matheff", "belong", "intmat",
+               "anxmat", "scmat", "complrn", "cooplrn", "teachsup", "disclim")]<- 
+  apply(data[,c("escs","xhrs2003", "xwkp2003", "instmot", "matheff", "belong", "intmat",
+               "anxmat", "scmat", "complrn", "cooplrn", "teachsup", "disclim")], 2, 
+      function(x) recode(x,"1000=NA; 999=NA;998=NA")
+      )
+round(apply(data,2, function(x) sum(is.na(x))/nrow(data)),3)
 ```
 [top](#top)
+
+Multiple Imputations
+-------------------------------
+```{r MI, echo=FALSE, cache=TRUE}
+library(snowfall)
+library(Amelia)
+MIdata <- amelia(matchData, 5, idvars=c("id", "schoolid", "stateid", "xath2003"), parallel="snow", ncpus=2)
+missmap(MIdata)
+```
+
