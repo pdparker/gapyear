@@ -479,7 +479,7 @@ matched_meandiffcount<-function (x){
 }
 
 matchData[,c("stateid", "schoolid", "loc")] <- apply(matchData[,c("stateid", "schoolid", "loc")],2, factor)
-
+#drop location
 forM <- paste("group ~ ", paste0(names(matchData)[-c(1,18, 37)],collapse=" + ") )
 M1 <- matchit(as.formula(forM), data=matchData, method= "nearest", discard="both",
               caliper = .15, ratio=3, distance="logit", distance.options=list(maxit=100),
