@@ -380,11 +380,11 @@ WaveAdict_singleitem <- list(id = 'id', stateid = 'State territory', schoolid = 
                              laa005 = 'ed plans',
                              laa006 = 'parent ed plaan', escs = "ses index from pisa results",
                              laa007 = 'friend ed plan',
-                             laa010 = 'work experience', laa025 = 'social comparison english',
+                             laa025 = 'social comparison english',
                              laa026 = 'social comparison english', 
                              laa027 = 'social comparison total',
                              xcsl2003 = 'grade', lad001 = 'work', xhrs2003 = 'average hrs worked',
-                             xwkp2003 = 'weekly wage', xath2003 = 'live parents',
+                             xath2003 = 'live parents',
                              belong = 'sense of belonging', intmat = 'interest in math',
                              instmot = 'intrinsic motivation', matheff = 'self-efficacy',
                              anxmat = 'anxiety', scmat = 'self-concept', complrn = 'competative',
@@ -393,8 +393,8 @@ WaveAdict_singleitem <- list(id = 'id', stateid = 'State territory', schoolid = 
 
 #Multi item scal and index item key|value pairs    
 WaveAdict_multiitem<- list(pv1 = "plausible values for achievement - First",
-                           HRS = "hours how spent per week - 6 item",
-                           st30q = "Attitudes toward education career - 8 item" 
+                           HRS = "hours how spent per week - 6 item"
+                           #st30q = "Attitudes toward education career - 8 item" 
                            )
 
 ##Print Scale descriptions and items flags
@@ -413,9 +413,94 @@ FeatureIndex<-grep(baseLocations, names(baseData), value=TRUE)
 matchData <- data.frame(baseData[,names(WaveAdict_singleitem)], baseData[, FeatureIndex])
 #Amount of missing data
 apply(matchData,2, function(x) sum(is.na(x))/nrow(matchData))
-#Bind with analysis Data
+#na.omit small amount of missing data for matching
 data <- rbind(UniversityEntrant2[,names(UniversityEntrant2)%in%names(Defer2)],
               Defer2[,names(Defer2)%in%names(UniversityEntrant2)])
+data$group <- c(rep(0, nrow(UniversityEntrant2)), rep(1, nrow(Defer2)))
+matchData <- na.omit(matchData)
+matchData <- merge(matchData, data[, c("id", "group")], by="id", by.all=FALSE)
+```
+[top](#top)
+
+Propensity score matching
+-----------------------------
+```{r PSM, echo=TRUE, cache=TRUE}
+require(ggplot2); require(MatchIt)
+meandifftable<- function (x){
+  post<-data.frame(x$sum.matched[4])
+  matchID <- as.vector (row.names (post) )
+  names(post)[1]<-c("m_mean_diff")
+  post$absolute<- abs(post[1])
+  total2<-post[order (-post$absolute, na.last=NA) ,]
+  meandiffover1<- subset(total2[1], total2[1]> .1 | total2[1]< -.1)
+  meandiffover1
+}
+
+all_meandiffplot <- function (x) {
+  adiff<-data.frame(x$sum.all)
+  names(adiff)[4]<-c("all_mean_diff")
+  diffplot<-ggplot(adiff, aes(all_mean_diff) )
+  diffplot<- diffplot+ geom_histogram (fill="grey")
+  diffplot<- diffplot+ geom_density (colour="red")
+  diffplot<-diffplot+xlim(-.5, .5)
+  diffplot
+}
+
+matched_meandiffplot <- function (x) {
+  mdiff<-data.frame(x$sum.matched)
+  names(mdiff)[4]<-c("matched_mean_diff")
+  diffplot<-ggplot(mdiff, aes(matched_mean_diff) )
+  diffplot<- diffplot+ geom_histogram (fill="grey")
+  diffplot<- diffplot+ geom_density (colour="red")
+  diffplot<-diffplot+xlim(-.5, .5)
+  diffplot
+}
+
+all_meandiffcount<-function (x){
+  all<-data.frame(x$sum.all[4])
+  all$all_group[all[1] > .25]<- "Large"
+  all$all_group[all[1] < -.25] <- "Large"
+  all$all_group[all[1] > .20 & all[1] < .25 ] <- "Medium"
+  all$all_group[all[1] < -.20 & all[1] > -.25] <- "Medium"
+  all$all_group[all[1] < .20 & all[1] > .00]<- "Small"
+  all$all_group[all[1] > -.20 & all[1] < .00] <- "Small"
+  table(all$all_group)
+}
+
+matched_meandiffcount<-function (x){
+  matched<-data.frame(x$sum.matched[4])
+  matched$matched_group[matched[1] > .25]<- "Large"
+  matched$matched_group[matched[1] < -.25] <- "Large"
+  matched$matched_group[matched[1] > .20 & matched[1] < .25 ] <- "Medium"
+  matched$matched_group[matched[1] < -.20 & matched[1] > -.25] <- "Medium"
+  matched$matched_group[matched[1] < .20 & matched[1] >= .00]<- "Small"
+  matched$matched_group[matched[1] > -.20 & matched[1] <= .00] <- "Small"
+  table(matched$matched_group)
+}
+
+matchData[,c("stateid", "schoolid", "loc")] <- apply(matchData[,c("stateid", "schoolid", "loc")],2, factor)
+
+forM <- paste("group ~ ", paste0(names(matchData)[-c(1,18, 37)],collapse=" + ") )
+M1 <- matchit(as.formula(forM), data=matchData, method= "nearest", discard="both",
+              caliper = .15, ratio=3, distance="logit", distance.options=list(maxit=100),
+              exact="schoolid")
+SM1 <- summary(M1,  addlvariables=NULL, standardize=TRUE)#interactions=TRUE,
+head(meandifftable(SM1),5)
+par(mfrow=c(1,2))
+all_meandiffplot(SM1)
+matched_meandiffplot(SM1)
+par(mfrow=c(1,1))
+all_meandiffcount(SM1)
+matched_meandiffcount(SM1)
+```
+
+
+Multiple Imputations
+-------------------------------
+Give the scale and complexity of the missing data model, it was run seperately on a super computer and is loaded here.
+```{r MI, echo=FALSE, cache=TRUE}
+#Bind with analysis Data
+
 data<- merge(data, matchData, by="id", all.x=TRUE)
 data <- data[, -c(grep("^W[6-7]|^W.[1-9]|.y$|xath2003|^pv[2-5]", names(data)))]
 data[,c("escs", "xhrs2003", "xwkp2003", "instmot", "matheff", "belong", "intmat",
@@ -425,15 +510,5 @@ data[,c("escs", "xhrs2003", "xwkp2003", "instmot", "matheff", "belong", "intmat"
       function(x) recode(x,"1000=NA; 999=NA;998=NA")
       )
 round(apply(data,2, function(x) sum(is.na(x))/nrow(data)),3)
-```
-[top](#top)
-
-Multiple Imputations
--------------------------------
-```{r MI, echo=FALSE, cache=TRUE}
-library(snowfall)
-library(Amelia)
-MIdata <- amelia(matchData, 5, idvars=c("id", "schoolid", "stateid", "xath2003"), parallel="snow", ncpus=2)
-missmap(MIdata)
 ```
 
