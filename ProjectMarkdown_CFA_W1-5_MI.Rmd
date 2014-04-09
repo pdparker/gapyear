@@ -227,7 +227,8 @@ Defer2 <- rbind.fill(lapply(DeferSplit,function(y){as.data.frame(y)}))
 ```
 
 ```{r helperFun, echo=FALSE}
-FunPlot_Multi <- function(model=fitQG, data=lifeSat, main="Life Satisfaction", paras){
+FunPlot_Multi <- function(model=fitQG, data=lifeSat, main="Life Satisfaction",
+                          var="LIFE.SAT", paras){
   #Observed Means
   MGS1 <- apply(data[data$group==-1,1:6], 2, mean, na.rm=TRUE)
   MGS2 <- apply(data[data$group==1,1:6], 2, mean, na.rm=TRUE)
@@ -245,6 +246,23 @@ FunPlot_Multi <- function(model=fitQG, data=lifeSat, main="Life Satisfaction", p
   points(0:5, MGS2[c(6,1:5)], col="red", type="l", lty=2)
 }
 
+FunPlot_Multi2 <- function(model=fitQG, data=lifeSat, main="Life Satisfaction",
+                          var="LIFE.SAT", paras){
+  #Observed Means
+  MGS1 <- apply(data[data$group.x==0,grep(paste0("W", "[0-5]",var), names(data))], 2, weighted.mean, weights=weights, na.rm=TRUE)
+  MGS2 <- apply(data[data$group.x==1,grep(paste0("W", "[0-5]",var), names(data))], 2, weighted.mean, weights=weights, na.rm=TRUE)  #Observed Trend
+  plot(0:5, MGS1[c(6,1:5)], type="l", lty=2, col="blue",
+       ylab="Growth", xlab="Years Since Graduation", main=main,
+       ylim=c(min(c(MGS1, MGS2))-.01, max(c(MGS1, MGS2))+.01)
+      )
+  f1 <- function(x) {(paras[1]+paras[4]*0) + (paras[2]*x+paras[5]*x*0) + 
+                       (paras[3]*x^2+paras[6]*x^2*0)}
+  curve(f1, 0,5,col="blue", add=TRUE)
+  f2 <- function(x) {(paras[1]+paras[4]*1) + (paras[2]*x+paras[5]*x*1) + 
+                       (paras[3]*x^2+paras[6]*x^2*1)}
+  curve(f2, 0,5,col="red", add=TRUE)
+  points(0:5, MGS2[c(6,1:5)], col="red", type="l", lty=2)
+}
 
 Model_Fun <- function(name="LIFE.SAT", 
                       params = list(i=TRUE,s=TRUE,q=TRUE,ig=TRUE,sg=TRUE,qg=TRUE)){
@@ -383,7 +401,7 @@ WaveAdict_singleitem <- list(id = 'id', stateid = 'State territory', schoolid = 
                              laa025 = 'social comparison english',
                              laa026 = 'social comparison english', 
                              laa027 = 'social comparison total',
-                             xcsl2003 = 'grade', lad001 = 'work', xhrs2003 = 'average hrs worked',
+                             xcsl2003 = 'grade', lad001 = 'work',
                              xath2003 = 'live parents',
                              belong = 'sense of belonging', intmat = 'interest in math',
                              instmot = 'intrinsic motivation', matheff = 'self-efficacy',
@@ -411,14 +429,20 @@ baseLocations <- paste0(paste0("^(", paste(names(WaveAdict_multiitem),collapse="
 FeatureIndex<-grep(baseLocations, names(baseData), value=TRUE)
 #Analaysis database is reduction from full lsay data
 matchData <- data.frame(baseData[,names(WaveAdict_singleitem)], baseData[, FeatureIndex])
+#recode missing
+library(car)
+matchData[,-c(1)] <- data.frame(apply(matchData[,-c(1)], 2,
+                                      function(x) recode(x, "999=NA; 998=NA")))
+matchData[,-c(1)] <- data.frame(apply(matchData[,-c(1)], 2,
+                              function(x) recode(x, "999=NA; 998=NA")))
 #Amount of missing data
 apply(matchData,2, function(x) sum(is.na(x))/nrow(matchData))
 #na.omit small amount of missing data for matching
 data <- rbind(UniversityEntrant2[,names(UniversityEntrant2)%in%names(Defer2)],
               Defer2[,names(Defer2)%in%names(UniversityEntrant2)])
 data$group <- c(rep(0, nrow(UniversityEntrant2)), rep(1, nrow(Defer2)))
-matchData <- na.omit(matchData)
 matchData <- merge(matchData, data[, c("id", "group")], by="id", by.all=FALSE)
+matchData <- na.omit(matchData)
 ```
 [top](#top)
 
@@ -479,12 +503,13 @@ matched_meandiffcount<-function (x){
 }
 
 matchData[,c("stateid", "schoolid", "loc")] <- apply(matchData[,c("stateid", "schoolid", "loc")],2, factor)
-#drop location
-forM <- paste("group ~ ", paste0(names(matchData)[-c(1,18, 37)],collapse=" + ") )
+#drop location and school and state for now
+set.seed(102)
+forM <- paste("group ~ ", paste0(names(matchData)[-c(1:4, 18, 36)],collapse=" + ") )
+#forM1 <- paste(forM, " + I(anxmat*disclim)")
 M1 <- matchit(as.formula(forM), data=matchData, method= "nearest", discard="both",
-              caliper = .15, ratio=3, distance="logit", distance.options=list(maxit=100),
-              exact="schoolid")
-SM1 <- summary(M1,  addlvariables=NULL, standardize=TRUE)#interactions=TRUE,
+              caliper = .20, ratio=3, distance="logit", distance.options=list(maxit=100))
+SM1 <- summary(M1,  addlvariables=NULL, interactions=TRUE,standardize=TRUE)
 head(meandifftable(SM1),5)
 par(mfrow=c(1,2))
 all_meandiffplot(SM1)
@@ -492,23 +517,117 @@ matched_meandiffplot(SM1)
 par(mfrow=c(1,1))
 all_meandiffcount(SM1)
 matched_meandiffcount(SM1)
+#save matched data with weights
+dmatch <- match.data(M1)
+nrow(dmatch)
+with(dmatch, table(group))
+
+dmatch <- merge(data, dmatch, by="id", by.all=FALSE)
 ```
 
 
-Multiple Imputations
+Matched Life Satisfaction
 -------------------------------
-Give the scale and complexity of the missing data model, it was run seperately on a super computer and is loaded here.
-```{r MI, echo=FALSE, cache=TRUE}
-#Bind with analysis Data
+Adding Weights
 
-data<- merge(data, matchData, by="id", all.x=TRUE)
-data <- data[, -c(grep("^W[6-7]|^W.[1-9]|.y$|xath2003|^pv[2-5]", names(data)))]
-data[,c("escs", "xhrs2003", "xwkp2003", "instmot", "matheff", "belong", "intmat",
-               "anxmat", "scmat", "complrn", "cooplrn", "teachsup", "disclim")]<- 
-  apply(data[,c("escs","xhrs2003", "xwkp2003", "instmot", "matheff", "belong", "intmat",
-               "anxmat", "scmat", "complrn", "cooplrn", "teachsup", "disclim")], 2, 
-      function(x) recode(x,"1000=NA; 999=NA;998=NA")
-      )
-round(apply(data,2, function(x) sum(is.na(x))/nrow(data)),3)
+```{r MlifeSat, echo=TRUE, cache=TRUE}
+library(lavaan.survey)
+#Linear
+m_linear <- Model_Fun(name="LIFE.SAT", params = list(i=TRUE,s=TRUE,q=F,ig=F,sg=F,qg=F))
+des <- svydesign(ids = ~id, weights = ~weights, data = dmatch)
+fitL <- growth(m_linear, data=dmatch, missing="fiml")
+fitL <- lavaan.survey(fitL, survey.design = des, estimator="ML")
+#Quadratic
+m_quadratic <- Model_Fun(name="LIFE.SAT", params = list(i=T,s=T,q=T,ig=F,sg=F,qg=F))
+fitQ <- growth(m_quadratic, data=dmatch, missing="fiml")
+fitQ <- lavaan.survey(fitQ, survey.design = des, estimator="ML")
+fitQ <- growth(m_quadratic, data=dmatch, missing="fiml")
+fitQ <- lavaan.survey(fitQ, survey.design = des, estimator="ML")
+Fit <- rbind(fitMeasures(fitL)[c('chisq','df',"cfi",'tli', 'rmsea')], 
+             fitMeasures(fitQ)[c('chisq','df',"cfi",'tli', 'rmsea')])
+Fit
+anova(fitL, fitQ)
+summary(fitQ, standardized=TRUE)
+#By Group
+mG_quadratic <- Model_Fun(name="LIFE.SAT", params = list(i=T,s=T,q=T,ig=T,sg=T,qg=T))
+mG_quadratic <- gsub("group", "group.x", mG_quadratic)
+fitQG <- growth(mG_quadratic, data=dmatch, missing="fiml")
+fitQG <- lavaan.survey(fitQG, survey.design = des, estimator="ML")
+Fit <- rbind(Fit,  fitMeasures(fitQG)[c('chisq','df',"cfi",'tli', 'rmsea')])
+Fit
+summary(fitQG, standardized=TRUE)
+##plot
+paras<- parameterEstimates(fitQG)[c(44,13,20,21:23),"est"]
+FunPlot_Multi2(model=fitQG, data=dmatch, main="Life Satisfaction",var="LIFE.SAT", paras)
+```
+
+Matched Career Prospects
+-------------------------------
+Adding Weights
+
+```{r McareerPros, echo=TRUE, cache=TRUE}
+library(lavaan.survey)
+#Linear
+m_linear <- Model_Fun(name="CAREER.PROS", params = list(i=TRUE,s=TRUE,q=F,ig=F,sg=F,qg=F))
+des <- svydesign(ids = ~id, weights = ~weights, data = dmatch)
+fitL <- growth(m_linear, data=dmatch, missing="fiml")
+fitL <- lavaan.survey(fitL, survey.design = des, estimator="ML")
+#Quadratic
+m_quadratic <- Model_Fun(name="CAREER.PROS", params = list(i=T,s=T,q=T,ig=F,sg=F,qg=F))
+fitQ <- growth(m_quadratic, data=dmatch, missing="fiml")
+fitQ <- lavaan.survey(fitQ, survey.design = des, estimator="ML")
+fitQ <- growth(m_quadratic, data=dmatch, missing="fiml")
+fitQ <- lavaan.survey(fitQ, survey.design = des, estimator="ML")
+Fit <- rbind(fitMeasures(fitL)[c('chisq','df',"cfi",'tli', 'rmsea')], 
+             fitMeasures(fitQ)[c('chisq','df',"cfi",'tli', 'rmsea')])
+Fit
+anova(fitL, fitQ)
+summary(fitQ, standardized=TRUE)
+#By Group
+mG_quadratic <- Model_Fun(name="CAREER.PROS", params = list(i=T,s=T,q=T,ig=T,sg=T,qg=T))
+mG_quadratic <- gsub("group", "group.x", mG_quadratic)
+fitQG <- growth(mG_quadratic, data=dmatch, missing="fiml")
+fitQG <- lavaan.survey(fitQG, survey.design = des, estimator="ML")
+Fit <- rbind(Fit,  fitMeasures(fitQG)[c('chisq','df',"cfi",'tli', 'rmsea')])
+Fit
+summary(fitQG, standardized=TRUE)
+##plot
+paras<- parameterEstimates(fitQG)[c(44,13,20,21:23),"est"]
+FunPlot_Multi2(model=fitQG, data=dmatch, main="Career Prospects",var="CAREER.PROS", paras)
+```
+
+Matched Future Prospects
+-------------------------------
+Adding Weights
+
+```{r MfuturePros, echo=TRUE, cache=TRUE}
+library(lavaan.survey)
+#Linear
+m_linear <- Model_Fun(name="FUTURE.PROSS", params = list(i=TRUE,s=TRUE,q=F,ig=F,sg=F,qg=F))
+des <- svydesign(ids = ~id, weights = ~weights, data = dmatch)
+fitL <- growth(m_linear, data=dmatch, missing="fiml")
+fitL <- lavaan.survey(fitL, survey.design = des, estimator="ML")
+#Quadratic
+m_quadratic <- Model_Fun(name="FUTURE.PROS", params = list(i=T,s=T,q=T,ig=F,sg=F,qg=F))
+fitQ <- growth(m_quadratic, data=dmatch, missing="fiml")
+fitQ <- lavaan.survey(fitQ, survey.design = des, estimator="ML")
+fitQ <- growth(m_quadratic, data=dmatch, missing="fiml")
+fitQ <- lavaan.survey(fitQ, survey.design = des, estimator="ML")
+Fit <- rbind(fitMeasures(fitL)[c('chisq','df',"cfi",'tli', 'rmsea')], 
+             fitMeasures(fitQ)[c('chisq','df',"cfi",'tli', 'rmsea')])
+Fit
+anova(fitL, fitQ)
+summary(fitQ, standardized=TRUE)
+#By Group
+mG_quadratic <- Model_Fun(name="FUTURE.PROS", params = list(i=T,s=T,q=T,ig=T,sg=T,qg=T))
+mG_quadratic <- gsub("group", "group.x", mG_quadratic)
+fitQG <- growth(mG_quadratic, data=dmatch, missing="fiml")
+fitQG <- lavaan.survey(fitQG, survey.design = des, estimator="ML")
+Fit <- rbind(Fit,  fitMeasures(fitQG)[c('chisq','df',"cfi",'tli', 'rmsea')])
+Fit
+summary(fitQG, standardized=TRUE)
+##plot
+paras<- parameterEstimates(fitQG)[c(44,13,20,21:23),"est"]
+FunPlot_Multi2(model=fitQG, data=dmatch, main="Future Prospects",var="FUTURE.PROS", paras)
 ```
 
