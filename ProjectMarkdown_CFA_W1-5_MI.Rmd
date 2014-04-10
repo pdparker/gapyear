@@ -9,6 +9,10 @@ Contents:
 3. [Growth Curve: General Life Satisfaction](#lifeSat)
 4. [Growth Curve: Satisfaction with Career Prospects](#careerPros)
 5. [Growth Curve: Satisfaction with Future Prospects](#futPros)
+6. [Propensity Score Matching](#PSM)
+7. [Matched Growth: Life Satisfaction](#Mls)
+8. [Matched Growth: Career Prospects](#Mcp)
+9. [Matched Growth: Future Prospects](#Mfp)
 
 <a name="SQL"></a>
 SQL Data Munging
@@ -281,6 +285,60 @@ Model_Fun <- function(name="LIFE.SAT",
   out <- gsub("temp", name, out)
   out
 }
+
+require(ggplot2); require(MatchIt)
+meandifftable<- function (x){
+  post<-data.frame(x$sum.matched[4])
+  matchID <- as.vector (row.names (post) )
+  names(post)[1]<-c("m_mean_diff")
+  post$absolute<- abs(post[1])
+  total2<-post[order (-post$absolute, na.last=NA) ,]
+  meandiffover1<- subset(total2[1], total2[1]> .1 | total2[1]< -.1)
+  meandiffover1
+}
+
+all_meandiffplot <- function (x) {
+  adiff<-data.frame(x$sum.all)
+  names(adiff)[4]<-c("all_mean_diff")
+  diffplot<-ggplot(adiff, aes(all_mean_diff) )
+  diffplot<- diffplot+ geom_histogram (fill="grey")
+  diffplot<- diffplot+ geom_density (colour="red")
+  diffplot<-diffplot+xlim(-.5, .5)
+  diffplot
+}
+
+matched_meandiffplot <- function (x) {
+  mdiff<-data.frame(x$sum.matched)
+  names(mdiff)[4]<-c("matched_mean_diff")
+  diffplot<-ggplot(mdiff, aes(matched_mean_diff) )
+  diffplot<- diffplot+ geom_histogram (fill="grey")
+  diffplot<- diffplot+ geom_density (colour="red")
+  diffplot<-diffplot+xlim(-.5, .5)
+  diffplot
+}
+
+all_meandiffcount<-function (x){
+  all<-data.frame(x$sum.all[4])
+  all$all_group[all[1] > .25]<- "Large"
+  all$all_group[all[1] < -.25] <- "Large"
+  all$all_group[all[1] > .20 & all[1] < .25 ] <- "Medium"
+  all$all_group[all[1] < -.20 & all[1] > -.25] <- "Medium"
+  all$all_group[all[1] < .20 & all[1] > .00]<- "Small"
+  all$all_group[all[1] > -.20 & all[1] < .00] <- "Small"
+  table(all$all_group)
+}
+
+matched_meandiffcount<-function (x){
+  matched<-data.frame(x$sum.matched[4])
+  matched$matched_group[matched[1] > .25]<- "Large"
+  matched$matched_group[matched[1] < -.25] <- "Large"
+  matched$matched_group[matched[1] > .20 & matched[1] < .25 ] <- "Medium"
+  matched$matched_group[matched[1] < -.20 & matched[1] > -.25] <- "Medium"
+  matched$matched_group[matched[1] < .20 & matched[1] >= .00]<- "Small"
+  matched$matched_group[matched[1] > -.20 & matched[1] <= .00] <- "Small"
+  table(matched$matched_group)
+}
+
 ```
 [top](#top)
 
@@ -383,13 +441,13 @@ cat("Percentage Missing:\n")
 apply(futPros[futPros$group==-1,1:5], 2, function(x) sum(is.na(x))/length(x))
 apply(futPros[futPros$group==1,1:5], 2, function(x) sum(is.na(x))/length(x))
 paras<- parameterEstimates(fitQG)[c(44,13,20,21:23),"est"]
-FunPlot_Multi(model=fitQG, data=futPros, main="Future Prospects", paras)
+FunPlot_Multi(model=fitQG, data=futPros, main="Future Prospects", paras=paras)
 ```
 [top](#top)
 
 Extract Matching Variables
 ----------------------------
-```{r matchVar, echo=TRUE}
+```{r matchVar, echo=FALSE}
 #Single item key|value pairs
 baseData <- dbGetQuery(LSAY, "SELECT * FROM Student2003")
 WaveAdict_singleitem <- list(id = 'id', stateid = 'State territory', schoolid = 'School ID',
@@ -410,19 +468,17 @@ WaveAdict_singleitem <- list(id = 'id', stateid = 'State territory', schoolid = 
                             disclim = 'discipline climate')
 
 #Multi item scal and index item key|value pairs    
-WaveAdict_multiitem<- list(pv1 = "plausible values for achievement - First",
-                           HRS = "hours how spent per week - 6 item"
-                           #st30q = "Attitudes toward education career - 8 item" 
+WaveAdict_multiitem<- list(pv1 = "plausible values for achievement",
+                           HRS = "hours how spent per week - 6 items"
                            )
 
 ##Print Scale descriptions and items flags
-print("Single Item scales")
+print("matching Features")
 for (i in seq_along(WaveAdict_singleitem)){
-  cat(paste(names(WaveAdict_singleitem)[i], WaveAdict_singleitem[[i]][1], sep=":\t"), sep="\n")
-}
-print("Multi Item scales")
+  cat(sprintf("Variable: %s:\t\t\tDescription: %s\n", names(WaveAdict_singleitem)[i], WaveAdict_singleitem[[i]][1]))
+  }
 for (i in seq_along(WaveAdict_multiitem)){
-  cat(paste(names(WaveAdict_multiitem)[i], WaveAdict_multiitem[[i]][1], sep=":\t"), sep="\n")
+  cat(sprintf("Variable: %s:\t\t\tDescription: %s\n", names(WaveAdict_multiitem)[i], WaveAdict_multiitem[[i]][1]))
 }
 #extraction of multi item locations
 baseLocations <- paste0(paste0("^(", paste(names(WaveAdict_multiitem),collapse="|"), ")", ".*$"))
@@ -443,72 +499,28 @@ data <- rbind(UniversityEntrant2[,names(UniversityEntrant2)%in%names(Defer2)],
 data$group <- c(rep(0, nrow(UniversityEntrant2)), rep(1, nrow(Defer2)))
 matchData <- merge(matchData, data[, c("id", "group")], by="id", by.all=FALSE)
 matchData <- na.omit(matchData)
+##########################
+#School average variables#
+##########################
+schAvg <- aggregate(cbind(escs,pv1math, pv1read, pv1scie, pv1prob)~schoolid, data=matchData,
+                    mean)
+names(schAvg) <- c("schoolid", "Sses","Smath","Sread","Sscie","Sprob")
+matchData <- merge(matchData, schAvg, by="schoolid")
 ```
 [top](#top)
 
+<a name="PSM"></a>
 Propensity score matching
 -----------------------------
-```{r PSM, echo=TRUE, cache=TRUE}
-require(ggplot2); require(MatchIt)
-meandifftable<- function (x){
-  post<-data.frame(x$sum.matched[4])
-  matchID <- as.vector (row.names (post) )
-  names(post)[1]<-c("m_mean_diff")
-  post$absolute<- abs(post[1])
-  total2<-post[order (-post$absolute, na.last=NA) ,]
-  meandiffover1<- subset(total2[1], total2[1]> .1 | total2[1]< -.1)
-  meandiffover1
-}
-
-all_meandiffplot <- function (x) {
-  adiff<-data.frame(x$sum.all)
-  names(adiff)[4]<-c("all_mean_diff")
-  diffplot<-ggplot(adiff, aes(all_mean_diff) )
-  diffplot<- diffplot+ geom_histogram (fill="grey")
-  diffplot<- diffplot+ geom_density (colour="red")
-  diffplot<-diffplot+xlim(-.5, .5)
-  diffplot
-}
-
-matched_meandiffplot <- function (x) {
-  mdiff<-data.frame(x$sum.matched)
-  names(mdiff)[4]<-c("matched_mean_diff")
-  diffplot<-ggplot(mdiff, aes(matched_mean_diff) )
-  diffplot<- diffplot+ geom_histogram (fill="grey")
-  diffplot<- diffplot+ geom_density (colour="red")
-  diffplot<-diffplot+xlim(-.5, .5)
-  diffplot
-}
-
-all_meandiffcount<-function (x){
-  all<-data.frame(x$sum.all[4])
-  all$all_group[all[1] > .25]<- "Large"
-  all$all_group[all[1] < -.25] <- "Large"
-  all$all_group[all[1] > .20 & all[1] < .25 ] <- "Medium"
-  all$all_group[all[1] < -.20 & all[1] > -.25] <- "Medium"
-  all$all_group[all[1] < .20 & all[1] > .00]<- "Small"
-  all$all_group[all[1] > -.20 & all[1] < .00] <- "Small"
-  table(all$all_group)
-}
-
-matched_meandiffcount<-function (x){
-  matched<-data.frame(x$sum.matched[4])
-  matched$matched_group[matched[1] > .25]<- "Large"
-  matched$matched_group[matched[1] < -.25] <- "Large"
-  matched$matched_group[matched[1] > .20 & matched[1] < .25 ] <- "Medium"
-  matched$matched_group[matched[1] < -.20 & matched[1] > -.25] <- "Medium"
-  matched$matched_group[matched[1] < .20 & matched[1] >= .00]<- "Small"
-  matched$matched_group[matched[1] > -.20 & matched[1] <= .00] <- "Small"
-  table(matched$matched_group)
-}
-
+```{r PSM, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE}
 matchData[,c("stateid", "schoolid", "loc")] <- apply(matchData[,c("stateid", "schoolid", "loc")],2, factor)
 #drop location and school and state for now
 set.seed(102)
 forM <- paste("group ~ ", paste0(names(matchData)[-c(1:4, 18, 36)],collapse=" + ") )
+cat("Formula:\n", forM)
 #forM1 <- paste(forM, " + I(anxmat*disclim)")
 M1 <- matchit(as.formula(forM), data=matchData, method= "nearest", discard="both",
-              caliper = .20, ratio=3, distance="logit", distance.options=list(maxit=100))
+              caliper = .20, ratio=3, distance="logit", distance.options=list(maxit=100), exact="xcsl2003")
 SM1 <- summary(M1,  addlvariables=NULL, interactions=TRUE,standardize=TRUE)
 head(meandifftable(SM1),5)
 par(mfrow=c(1,2))
@@ -521,16 +533,16 @@ matched_meandiffcount(SM1)
 dmatch <- match.data(M1)
 nrow(dmatch)
 with(dmatch, table(group))
-
 dmatch <- merge(data, dmatch, by="id", by.all=FALSE)
 ```
+[top](#top)
+<a name="Mls"></a>
 
 
 Matched Life Satisfaction
 -------------------------------
-Adding Weights
 
-```{r MlifeSat, echo=TRUE, cache=TRUE}
+```{r MlifeSat, echo=FALSE, cache=TRUE}
 library(lavaan.survey)
 #Linear
 m_linear <- Model_Fun(name="LIFE.SAT", params = list(i=TRUE,s=TRUE,q=F,ig=F,sg=F,qg=F))
@@ -560,12 +572,14 @@ summary(fitQG, standardized=TRUE)
 paras<- parameterEstimates(fitQG)[c(44,13,20,21:23),"est"]
 FunPlot_Multi2(model=fitQG, data=dmatch, main="Life Satisfaction",var="LIFE.SAT", paras)
 ```
+[top](#top)
+<a name="Mcp"></a>
+
 
 Matched Career Prospects
 -------------------------------
-Adding Weights
 
-```{r McareerPros, echo=TRUE, cache=TRUE}
+```{r McareerPros, echo=FALSE, cache=TRUE}
 library(lavaan.survey)
 #Linear
 m_linear <- Model_Fun(name="CAREER.PROS", params = list(i=TRUE,s=TRUE,q=F,ig=F,sg=F,qg=F))
@@ -595,12 +609,14 @@ summary(fitQG, standardized=TRUE)
 paras<- parameterEstimates(fitQG)[c(44,13,20,21:23),"est"]
 FunPlot_Multi2(model=fitQG, data=dmatch, main="Career Prospects",var="CAREER.PROS", paras)
 ```
+[top](#top)
+<a name="Mfp"></a>
+
 
 Matched Future Prospects
 -------------------------------
-Adding Weights
 
-```{r MfuturePros, echo=TRUE, cache=TRUE}
+```{r MfuturePros, echo=FALSE, cache=TRUE}
 library(lavaan.survey)
 #Linear
 m_linear <- Model_Fun(name="FUTURE.PROSS", params = list(i=TRUE,s=TRUE,q=F,ig=F,sg=F,qg=F))
@@ -630,4 +646,4 @@ summary(fitQG, standardized=TRUE)
 paras<- parameterEstimates(fitQG)[c(44,13,20,21:23),"est"]
 FunPlot_Multi2(model=fitQG, data=dmatch, main="Future Prospects",var="FUTURE.PROS", paras)
 ```
-
+[top](#top)
