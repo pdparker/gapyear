@@ -9,6 +9,10 @@ Contents:
 3. [Growth Curve: General Life Satisfaction](#lifeSat)
 4. [Growth Curve: Satisfaction with Career Prospects](#careerPros)
 5. [Growth Curve: Satisfaction with Future Prospects](#futPros)
+6. [Propensity Score Matching](#PSM)
+7. [Matched Growth: Life Satisfaction](#Mls)
+8. [Matched Growth: Career Prospects](#Mcp)
+9. [Matched Growth: Future Prospects](#Mfp)
 
 <a name="SQL"></a>
 SQL Data Munging
@@ -56,6 +60,11 @@ Items in **bold** are the ones used in the analysis.
 
 
 
+```
+## Loading required package: ggplot2
+## Loading required package: MatchIt
+## Loading required package: MASS
+```
 
 [top](#top)
 
@@ -645,10 +654,6 @@ Group Parameters not significant for Life Satisfaction so pooled model is plotte
 ##      0.006299      0.092913      0.166929      0.207874      0.318110
 ```
 
-```
-## Error: argument "paras" is missing, with no default
-```
-
 ![plot of chunk futurePros](figure/futurePros.png) 
 
 [top](#top)
@@ -656,109 +661,43 @@ Group Parameters not significant for Life Satisfaction so pooled model is plotte
 Extract Matching Variables
 ----------------------------
 
-```r
-#Single item key|value pairs
-baseData <- dbGetQuery(LSAY, "SELECT * FROM Student2003")
-WaveAdict_singleitem <- list(id = 'id', stateid = 'State territory', schoolid = 'School ID',
-                             loc = 'location class', sex = 'gender',
-                             sisced = 'education expectations', indig = 'indigenous status', 
-                             laa005 = 'ed plans',
-                             laa006 = 'parent ed plaan', escs = "ses index from pisa results",
-                             laa007 = 'friend ed plan',
-                             laa025 = 'social comparison english',
-                             laa026 = 'social comparison english', 
-                             laa027 = 'social comparison total',
-                             xcsl2003 = 'grade', lad001 = 'work',
-                             xath2003 = 'live parents',
-                             belong = 'sense of belonging', intmat = 'interest in math',
-                             instmot = 'intrinsic motivation', matheff = 'self-efficacy',
-                             anxmat = 'anxiety', scmat = 'self-concept', complrn = 'competative',
-                             cooplrn = 'cooperative', teachsup = 'teacher support',
-                            disclim = 'discipline climate')
-
-#Multi item scal and index item key|value pairs    
-WaveAdict_multiitem<- list(pv1 = "plausible values for achievement - First",
-                           HRS = "hours how spent per week - 6 item"
-                           #st30q = "Attitudes toward education career - 8 item" 
-                           )
-
-##Print Scale descriptions and items flags
-print("Single Item scales")
+```
+## [1] "matching Features"
 ```
 
 ```
-## [1] "Single Item scales"
-```
-
-```r
-for (i in seq_along(WaveAdict_singleitem)){
-  cat(paste(names(WaveAdict_singleitem)[i], WaveAdict_singleitem[[i]][1], sep=":\t"), sep="\n")
-}
-```
-
-```
-## id:	id
-## stateid:	State territory
-## schoolid:	School ID
-## loc:	location class
-## sex:	gender
-## sisced:	education expectations
-## indig:	indigenous status
-## laa005:	ed plans
-## laa006:	parent ed plaan
-## escs:	ses index from pisa results
-## laa007:	friend ed plan
-## laa025:	social comparison english
-## laa026:	social comparison english
-## laa027:	social comparison total
-## xcsl2003:	grade
-## lad001:	work
-## xath2003:	live parents
-## belong:	sense of belonging
-## intmat:	interest in math
-## instmot:	intrinsic motivation
-## matheff:	self-efficacy
-## anxmat:	anxiety
-## scmat:	self-concept
-## complrn:	competative
-## cooplrn:	cooperative
-## teachsup:	teacher support
-## disclim:	discipline climate
-```
-
-```r
-print("Multi Item scales")
+## Variable: id:			Description: id
+## Variable: stateid:			Description: State territory
+## Variable: schoolid:			Description: School ID
+## Variable: loc:			Description: location class
+## Variable: sex:			Description: gender
+## Variable: sisced:			Description: education expectations
+## Variable: indig:			Description: indigenous status
+## Variable: laa005:			Description: ed plans
+## Variable: laa006:			Description: parent ed plaan
+## Variable: escs:			Description: ses index from pisa results
+## Variable: laa007:			Description: friend ed plan
+## Variable: laa025:			Description: social comparison english
+## Variable: laa026:			Description: social comparison english
+## Variable: laa027:			Description: social comparison total
+## Variable: xcsl2003:			Description: grade
+## Variable: lad001:			Description: work
+## Variable: xath2003:			Description: live parents
+## Variable: belong:			Description: sense of belonging
+## Variable: intmat:			Description: interest in math
+## Variable: instmot:			Description: intrinsic motivation
+## Variable: matheff:			Description: self-efficacy
+## Variable: anxmat:			Description: anxiety
+## Variable: scmat:			Description: self-concept
+## Variable: complrn:			Description: competative
+## Variable: cooplrn:			Description: cooperative
+## Variable: teachsup:			Description: teacher support
+## Variable: disclim:			Description: discipline climate
 ```
 
 ```
-## [1] "Multi Item scales"
-```
-
-```r
-for (i in seq_along(WaveAdict_multiitem)){
-  cat(paste(names(WaveAdict_multiitem)[i], WaveAdict_multiitem[[i]][1], sep=":\t"), sep="\n")
-}
-```
-
-```
-## pv1:	plausible values for achievement - First
-## HRS:	hours how spent per week - 6 item
-```
-
-```r
-#extraction of multi item locations
-baseLocations <- paste0(paste0("^(", paste(names(WaveAdict_multiitem),collapse="|"), ")", ".*$"))
-FeatureIndex<-grep(baseLocations, names(baseData), value=TRUE)
-#Analaysis database is reduction from full lsay data
-matchData <- data.frame(baseData[,names(WaveAdict_singleitem)], baseData[, FeatureIndex])
-#recode missing
-library(car)
-matchData[,-c(1)] <- data.frame(apply(matchData[,-c(1)], 2,
-                                      function(x) recode(x, "999=NA; 998=NA")))
-matchData[,-c(1)] <- data.frame(apply(matchData[,-c(1)], 2,
-                              function(x) recode(x, "999=NA; 998=NA")))
-#Amount of missing data
-apply(matchData,2, function(x) sum(is.na(x))/nrow(matchData))
+## Variable: pv1:			Description: plausible values for achievement
+## Variable: HRS:			Description: hours how spent per week - 6 items
 ```
 
 ```
@@ -774,266 +713,87 @@ apply(matchData,2, function(x) sum(is.na(x))/nrow(matchData))
 ## 0.000000 0.000000 0.000000
 ```
 
-```r
-#na.omit small amount of missing data for matching
-data <- rbind(UniversityEntrant2[,names(UniversityEntrant2)%in%names(Defer2)],
-              Defer2[,names(Defer2)%in%names(UniversityEntrant2)])
-data$group <- c(rep(0, nrow(UniversityEntrant2)), rep(1, nrow(Defer2)))
-matchData <- merge(matchData, data[, c("id", "group")], by="id", by.all=FALSE)
-matchData <- na.omit(matchData)
-```
-
 [top](#top)
 
+<a name="PSM"></a>
 Propensity score matching
 -----------------------------
 
-```r
-require(ggplot2)
+```
+## Formula:
+##  group ~  sex + sisced + indig + laa005 + laa006 + escs + laa007 + laa025 + laa026 + laa027 + xcsl2003 + lad001 + xath2003 + intmat + instmot + matheff + anxmat + scmat + complrn + cooplrn + teachsup + disclim + pv1math + pv1math1 + pv1math2 + pv1math3 + pv1math4 + pv1read + pv1scie + pv1prob + Sses + Smath + Sread + Sscie + Sprob
 ```
 
 ```
-## Loading required package: ggplot2
+##                m_mean_diff
+## anxmatxanxmat      -0.1416
+## intmatxintmat      -0.1262
+## laa005xdisclim      0.1191
+## anxmatxscmat        0.1153
+## laa005xcooplrn      0.1073
 ```
 
-```r
-require(MatchIt)
-```
-
-```
-## Loading required package: MatchIt
-## Loading required package: MASS
-```
-
-```r
-meandifftable <- function(x) {
-    post <- data.frame(x$sum.matched[4])
-    matchID <- as.vector(row.names(post))
-    names(post)[1] <- c("m_mean_diff")
-    post$absolute <- abs(post[1])
-    total2 <- post[order(-post$absolute, na.last = NA), ]
-    meandiffover1 <- subset(total2[1], total2[1] > 0.1 | total2[1] < -0.1)
-    meandiffover1
-}
-
-all_meandiffplot <- function(x) {
-    adiff <- data.frame(x$sum.all)
-    names(adiff)[4] <- c("all_mean_diff")
-    diffplot <- ggplot(adiff, aes(all_mean_diff))
-    diffplot <- diffplot + geom_histogram(fill = "grey")
-    diffplot <- diffplot + geom_density(colour = "red")
-    diffplot <- diffplot + xlim(-0.5, 0.5)
-    diffplot
-}
-
-matched_meandiffplot <- function(x) {
-    mdiff <- data.frame(x$sum.matched)
-    names(mdiff)[4] <- c("matched_mean_diff")
-    diffplot <- ggplot(mdiff, aes(matched_mean_diff))
-    diffplot <- diffplot + geom_histogram(fill = "grey")
-    diffplot <- diffplot + geom_density(colour = "red")
-    diffplot <- diffplot + xlim(-0.5, 0.5)
-    diffplot
-}
-
-all_meandiffcount <- function(x) {
-    all <- data.frame(x$sum.all[4])
-    all$all_group[all[1] > 0.25] <- "Large"
-    all$all_group[all[1] < -0.25] <- "Large"
-    all$all_group[all[1] > 0.2 & all[1] < 0.25] <- "Medium"
-    all$all_group[all[1] < -0.2 & all[1] > -0.25] <- "Medium"
-    all$all_group[all[1] < 0.2 & all[1] > 0] <- "Small"
-    all$all_group[all[1] > -0.2 & all[1] < 0] <- "Small"
-    table(all$all_group)
-}
-
-matched_meandiffcount <- function(x) {
-    matched <- data.frame(x$sum.matched[4])
-    matched$matched_group[matched[1] > 0.25] <- "Large"
-    matched$matched_group[matched[1] < -0.25] <- "Large"
-    matched$matched_group[matched[1] > 0.2 & matched[1] < 0.25] <- "Medium"
-    matched$matched_group[matched[1] < -0.2 & matched[1] > -0.25] <- "Medium"
-    matched$matched_group[matched[1] < 0.2 & matched[1] >= 0] <- "Small"
-    matched$matched_group[matched[1] > -0.2 & matched[1] <= 0] <- "Small"
-    table(matched$matched_group)
-}
-
-matchData[, c("stateid", "schoolid", "loc")] <- apply(matchData[, c("stateid", 
-    "schoolid", "loc")], 2, factor)
-# drop location and school and state for now
-set.seed(102)
-forM <- paste("group ~ ", paste0(names(matchData)[-c(1:4, 18, 36)], collapse = " + "))
-# forM1 <- paste(forM, ' + I(anxmat*disclim)')
-M1 <- matchit(as.formula(forM), data = matchData, method = "nearest", discard = "both", 
-    caliper = 0.2, ratio = 3, distance = "logit", distance.options = list(maxit = 100))
-SM1 <- summary(M1, addlvariables = NULL, interactions = TRUE, standardize = TRUE)
-head(meandifftable(SM1), 5)
-```
-
-```
-##               m_mean_diff
-## anxmatxanxmat     -0.1587
-## anxmatxscmat       0.1105
-## intmatxintmat     -0.1029
-```
-
-```r
-par(mfrow = c(1, 2))
-all_meandiffplot(SM1)
-```
-
-```
-## stat_bin: binwidth defaulted to range/30. Use 'binwidth = x' to adjust this.
-```
-
-```
-## Warning: Removed 14 rows containing non-finite values (stat_density).
-```
-
-![plot of chunk PSM](figure/PSM1.png) 
-
-```r
-matched_meandiffplot(SM1)
-```
-
-```
-## stat_bin: binwidth defaulted to range/30. Use 'binwidth = x' to adjust this.
-```
-
-```
-## Warning: Removed 2 rows containing non-finite values (stat_density).
-```
-
-![plot of chunk PSM](figure/PSM2.png) 
-
-```r
-par(mfrow = c(1, 1))
-all_meandiffcount(SM1)
-```
+![plot of chunk PSM](figure/PSM1.png) ![plot of chunk PSM](figure/PSM2.png) 
 
 ```
 ## 
 ##  Large Medium  Small 
-##     61     26    438
-```
-
-```r
-matched_meandiffcount(SM1)
+##     79     31    590
 ```
 
 ```
 ## 
 ## Small 
-##   525
-```
-
-```r
-# save matched data with weights
-dmatch <- match.data(M1)
-nrow(dmatch)
+##   700
 ```
 
 ```
-## [1] 2182
-```
-
-```r
-with(dmatch, table(group))
+## [1] 2104
 ```
 
 ```
 ## group
 ##    0    1 
-## 1567  615
+## 1523  581
 ```
 
-```r
-
-dmatch <- merge(data, dmatch, by = "id", by.all = FALSE)
-```
-
+[top](#top)
+<a name="Mls"></a>
 
 
 Matched Life Satisfaction
 -------------------------------
-Adding Weights
 
 
-```r
-library(lavaan.survey)
-# Linear
-m_linear <- Model_Fun(name = "LIFE.SAT", params = list(i = TRUE, s = TRUE, q = F, 
-    ig = F, sg = F, qg = F))
-des <- svydesign(ids = ~id, weights = ~weights, data = dmatch)
-fitL <- growth(m_linear, data = dmatch, missing = "fiml")
-fitL <- lavaan.survey(fitL, survey.design = des, estimator = "ML")
 ```
-
-```
-## Warning: Estimator 'ML' will not correct standard errors and chi-square
-## statistic.
-```
-
-```r
-# Quadratic
-m_quadratic <- Model_Fun(name = "LIFE.SAT", params = list(i = T, s = T, q = T, 
-    ig = F, sg = F, qg = F))
-fitQ <- growth(m_quadratic, data = dmatch, missing = "fiml")
-fitQ <- lavaan.survey(fitQ, survey.design = des, estimator = "ML")
-```
-
-```
-## Warning: Estimator 'ML' will not correct standard errors and chi-square
-## statistic.
-```
-
-```r
-fitQ <- growth(m_quadratic, data = dmatch, missing = "fiml")
-fitQ <- lavaan.survey(fitQ, survey.design = des, estimator = "ML")
-```
-
-```
-## Warning: Estimator 'ML' will not correct standard errors and chi-square
-## statistic.
-```
-
-```r
-Fit <- rbind(fitMeasures(fitL)[c("chisq", "df", "cfi", "tli", "rmsea")], fitMeasures(fitQ)[c("chisq", 
-    "df", "cfi", "tli", "rmsea")])
-Fit
+## Warning: Estimator 'ML' will not correct standard errors and chi-square statistic.
+## Warning: Estimator 'ML' will not correct standard errors and chi-square statistic.
+## Warning: Estimator 'ML' will not correct standard errors and chi-square statistic.
 ```
 
 ```
 ##      chisq df    cfi    tli   rmsea
-## [1,] 79.75 16 0.9806 0.9818 0.04273
-## [2,] 34.33 12 0.9932 0.9915 0.02920
-```
-
-```r
-anova(fitL, fitQ)
+## [1,] 66.28 16 0.9837 0.9847 0.03865
+## [2,] 33.94 12 0.9929 0.9911 0.02948
 ```
 
 ```
 ## Chi Square Difference Test
 ## 
 ##      Df   AIC   BIC Chisq Chisq diff Df diff Pr(>Chisq)    
-## fitQ 12 16133 16219  34.3                                  
-## fitL 16 16171 16233  79.8       45.4       4    3.2e-09 ***
+## fitQ 12 15715 15800  33.9                                  
+## fitL 16 15740 15802  66.3       32.3       4    1.6e-06 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
-summary(fitQ, standardized = TRUE)
 ```
-
-```
-## lavaan (0.5-16) converged normally after 105 iterations
+## lavaan (0.5-16) converged normally after  79 iterations
 ## 
-##   Number of observations                          2182
+##   Number of observations                          2104
 ## 
 ##   Estimator                                         ML
-##   Minimum Function Test Statistic               34.327
+##   Minimum Function Test Statistic               33.937
 ##   Degrees of freedom                                12
 ##   P-value (Chi-square)                           0.001
 ## 
@@ -1045,64 +805,55 @@ summary(fitQ, standardized = TRUE)
 ##                    Estimate  Std.err  Z-value  P(>|z|)   Std.lv  Std.all
 ## Latent variables:
 ##   i =~
-##     W0LIFE.SAT        1.000                               0.321    0.637
-##     W1LIFE.SAT        1.000                               0.321    0.641
-##     W2LIFE.SAT        1.000                               0.321    0.641
-##     W3LIFE.SAT        1.000                               0.321    0.638
-##     W4LIFE.SAT        1.000                               0.321    0.632
-##     W5LIFE.SAT        1.000                               0.321    0.613
+##     W0LIFE.SAT        1.000                               0.326    0.652
+##     W1LIFE.SAT        1.000                               0.326    0.654
+##     W2LIFE.SAT        1.000                               0.326    0.641
+##     W3LIFE.SAT        1.000                               0.326    0.637
+##     W4LIFE.SAT        1.000                               0.326    0.638
+##     W5LIFE.SAT        1.000                               0.326    0.622
 ##   s =~
 ##     W0LIFE.SAT        0.000                               0.000    0.000
-##     W1LIFE.SAT        1.000                               0.133    0.265
-##     W2LIFE.SAT        2.000                               0.266    0.531
-##     W3LIFE.SAT        3.000                               0.399    0.793
-##     W4LIFE.SAT        4.000                               0.532    1.046
-##     W5LIFE.SAT        5.000                               0.665    1.268
+##     W1LIFE.SAT        1.000                               0.125    0.250
+##     W2LIFE.SAT        2.000                               0.249    0.491
+##     W3LIFE.SAT        3.000                               0.374    0.731
+##     W4LIFE.SAT        4.000                               0.499    0.976
+##     W5LIFE.SAT        5.000                               0.624    1.190
 ##   q =~
 ##     W0LIFE.SAT        0.000                               0.000    0.000
-##     W1LIFE.SAT        1.000                               0.023    0.045
-##     W2LIFE.SAT        4.000                               0.091    0.181
-##     W3LIFE.SAT        9.000                               0.204    0.405
-##     W4LIFE.SAT       16.000                               0.362    0.712
-##     W5LIFE.SAT       25.000                               0.566    1.079
+##     W1LIFE.SAT        1.000                               0.019    0.037
+##     W2LIFE.SAT        4.000                               0.075    0.147
+##     W3LIFE.SAT        9.000                               0.168    0.328
+##     W4LIFE.SAT       16.000                               0.299    0.584
+##     W5LIFE.SAT       25.000                               0.467    0.890
 ## 
 ## Covariances:
 ##   i ~~
-##     s                -0.008    0.006   -1.302    0.193   -0.183   -0.183
-##     q                 0.001    0.001    0.739    0.460    0.101    0.101
+##     s                -0.009    0.006   -1.427    0.154   -0.214   -0.214
+##     q                 0.001    0.001    0.623    0.533    0.103    0.103
 ##   s ~~
-##     q                -0.003    0.001   -3.103    0.002   -0.916   -0.916
+##     q                -0.002    0.001   -2.330    0.020   -0.907   -0.907
 ## 
 ## Intercepts:
-##     s         (b)     0.011    0.007    1.503    0.133    0.085    0.085
-##     q         (c)    -0.007    0.001   -4.713    0.000   -0.293   -0.293
+##     s         (b)     0.007    0.008    0.925    0.355    0.056    0.056
+##     q         (c)    -0.006    0.001   -3.886    0.000   -0.296   -0.296
 ##     W0LIFE.SA         0.000                               0.000    0.000
 ##     W1LIFE.SA         0.000                               0.000    0.000
 ##     W2LIFE.SA         0.000                               0.000    0.000
 ##     W3LIFE.SA         0.000                               0.000    0.000
 ##     W4LIFE.SA         0.000                               0.000    0.000
 ##     W5LIFE.SA         0.000                               0.000    0.000
-##     i                 3.581    0.010  350.152    0.000   11.144   11.144
+##     i                 3.588    0.010  346.222    0.000   11.015   11.015
 ## 
 ## Variances:
-##     W0LIFE.SAT        0.151    0.009                      0.151    0.595
-##     W1LIFE.SAT        0.150    0.005                      0.150    0.595
-##     W2LIFE.SAT        0.138    0.005                      0.138    0.551
-##     W3LIFE.SAT        0.132    0.005                      0.132    0.521
-##     W4LIFE.SAT        0.133    0.005                      0.133    0.515
-##     W5LIFE.SAT        0.141    0.009                      0.141    0.511
-##     i                 0.103    0.009                      1.000    1.000
-##     s                 0.018    0.005                      1.000    1.000
-##     q                 0.001    0.000                      1.000    1.000
-```
-
-```r
-# By Group
-mG_quadratic <- Model_Fun(name = "LIFE.SAT", params = list(i = T, s = T, q = T, 
-    ig = T, sg = T, qg = T))
-mG_quadratic <- gsub("group", "group.x", mG_quadratic)
-fitQG <- growth(mG_quadratic, data = dmatch, missing = "fiml")
-fitQG <- lavaan.survey(fitQG, survey.design = des, estimator = "ML")
+##     W0LIFE.SAT        0.144    0.009                      0.144    0.575
+##     W1LIFE.SAT        0.146    0.005                      0.146    0.590
+##     W2LIFE.SAT        0.148    0.006                      0.148    0.573
+##     W3LIFE.SAT        0.142    0.005                      0.142    0.543
+##     W4LIFE.SAT        0.136    0.005                      0.136    0.523
+##     W5LIFE.SAT        0.145    0.009                      0.145    0.528
+##     i                 0.106    0.009                      1.000    1.000
+##     s                 0.016    0.005                      1.000    1.000
+##     q                 0.000    0.000                      1.000    1.000
 ```
 
 ```
@@ -1110,29 +861,20 @@ fitQG <- lavaan.survey(fitQG, survey.design = des, estimator = "ML")
 ## statistic.
 ```
 
-```r
-Fit <- rbind(Fit, fitMeasures(fitQG)[c("chisq", "df", "cfi", "tli", "rmsea")])
-Fit
-```
-
 ```
 ##      chisq df    cfi    tli   rmsea
-## [1,] 79.75 16 0.9806 0.9818 0.04273
-## [2,] 34.33 12 0.9932 0.9915 0.02920
-## [3,] 50.58 15 0.9892 0.9849 0.03297
-```
-
-```r
-summary(fitQG, standardized = TRUE)
+## [1,] 66.28 16 0.9837 0.9847 0.03865
+## [2,] 33.94 12 0.9929 0.9911 0.02948
+## [3,] 49.79 15 0.9888 0.9843 0.03320
 ```
 
 ```
-## lavaan (0.5-16) converged normally after  94 iterations
+## lavaan (0.5-16) converged normally after  97 iterations
 ## 
-##   Number of observations                          2182
+##   Number of observations                          2104
 ## 
 ##   Estimator                                         ML
-##   Minimum Function Test Statistic               50.578
+##   Minimum Function Test Statistic               49.791
 ##   Degrees of freedom                                15
 ##   P-value (Chi-square)                           0.000
 ## 
@@ -1144,159 +886,108 @@ summary(fitQG, standardized = TRUE)
 ##                    Estimate  Std.err  Z-value  P(>|z|)   Std.lv  Std.all
 ## Latent variables:
 ##   i =~
-##     W0LIFE.SAT        1.000                               0.322    0.638
-##     W1LIFE.SAT        1.000                               0.322    0.642
-##     W2LIFE.SAT        1.000                               0.322    0.642
-##     W3LIFE.SAT        1.000                               0.322    0.640
-##     W4LIFE.SAT        1.000                               0.322    0.633
-##     W5LIFE.SAT        1.000                               0.322    0.614
+##     W0LIFE.SAT        1.000                               0.327    0.654
+##     W1LIFE.SAT        1.000                               0.327    0.656
+##     W2LIFE.SAT        1.000                               0.327    0.642
+##     W3LIFE.SAT        1.000                               0.327    0.639
+##     W4LIFE.SAT        1.000                               0.327    0.639
+##     W5LIFE.SAT        1.000                               0.327    0.623
 ##   s =~
 ##     W0LIFE.SAT        0.000                               0.000    0.000
-##     W1LIFE.SAT        1.000                               0.134    0.266
-##     W2LIFE.SAT        2.000                               0.267    0.532
-##     W3LIFE.SAT        3.000                               0.401    0.796
-##     W4LIFE.SAT        4.000                               0.534    1.050
-##     W5LIFE.SAT        5.000                               0.668    1.273
+##     W1LIFE.SAT        1.000                               0.126    0.252
+##     W2LIFE.SAT        2.000                               0.251    0.494
+##     W3LIFE.SAT        3.000                               0.377    0.737
+##     W4LIFE.SAT        4.000                               0.502    0.983
+##     W5LIFE.SAT        5.000                               0.628    1.198
 ##   q =~
 ##     W0LIFE.SAT        0.000                               0.000    0.000
-##     W1LIFE.SAT        1.000                               0.023    0.045
-##     W2LIFE.SAT        4.000                               0.091    0.181
-##     W3LIFE.SAT        9.000                               0.204    0.406
-##     W4LIFE.SAT       16.000                               0.363    0.714
-##     W5LIFE.SAT       25.000                               0.567    1.081
+##     W1LIFE.SAT        1.000                               0.019    0.038
+##     W2LIFE.SAT        4.000                               0.075    0.147
+##     W3LIFE.SAT        9.000                               0.169    0.330
+##     W4LIFE.SAT       16.000                               0.300    0.587
+##     W5LIFE.SAT       25.000                               0.468    0.894
 ## 
 ## Regressions:
 ##   i ~
-##     group.x          -0.021    0.023   -0.896    0.370   -0.064   -0.028
+##     group.x          -0.029    0.023   -1.243    0.214   -0.088   -0.039
 ##   s ~
-##     group.x  (g1)     0.033    0.017    1.993    0.046    0.250    0.112
+##     group.x  (g1)     0.038    0.017    2.265    0.024    0.304    0.136
 ##   q ~
-##     group.x  (g2)    -0.007    0.003   -2.079    0.038   -0.289   -0.129
+##     group.x  (g2)    -0.008    0.003   -2.453    0.014   -0.414   -0.185
 ## 
 ## Covariances:
 ##   i ~~
-##     s                -0.008    0.006   -1.322    0.186   -0.185   -0.185
-##     q                 0.001    0.001    0.750    0.453    0.103    0.103
+##     s                -0.009    0.006   -1.454    0.146   -0.218   -0.218
+##     q                 0.001    0.001    0.635    0.526    0.106    0.106
 ##   s ~~
-##     q                -0.003    0.001   -3.079    0.002   -0.916   -0.916
+##     q                -0.002    0.001   -2.299    0.022   -0.907   -0.907
 ## 
 ## Intercepts:
-##     s         (b)     0.002    0.009    0.241    0.810    0.016    0.016
-##     q         (c)    -0.005    0.002   -2.937    0.003   -0.214   -0.214
+##     s         (b)    -0.004    0.009   -0.409    0.682   -0.029   -0.029
+##     q         (c)    -0.003    0.002   -2.011    0.044   -0.179   -0.179
 ##     W0LIFE.SA         0.000                               0.000    0.000
 ##     W1LIFE.SA         0.000                               0.000    0.000
 ##     W2LIFE.SA         0.000                               0.000    0.000
 ##     W3LIFE.SA         0.000                               0.000    0.000
 ##     W4LIFE.SA         0.000                               0.000    0.000
 ##     W5LIFE.SA         0.000                               0.000    0.000
-##     i                 3.586    0.012  298.868    0.000   11.142   11.142
+##     i                 3.596    0.012  294.584    0.000   11.012   11.012
 ## 
 ## Variances:
-##     W0LIFE.SAT        0.151    0.009                      0.151    0.593
-##     W1LIFE.SAT        0.150    0.005                      0.150    0.595
-##     W2LIFE.SAT        0.139    0.005                      0.139    0.552
-##     W3LIFE.SAT        0.132    0.005                      0.132    0.521
-##     W4LIFE.SAT        0.133    0.005                      0.133    0.515
-##     W5LIFE.SAT        0.141    0.009                      0.141    0.511
-##     i                 0.104    0.009                      0.999    0.999
-##     s                 0.018    0.005                      0.988    0.988
-##     q                 0.001    0.000                      0.983    0.983
+##     W0LIFE.SAT        0.143    0.009                      0.143    0.572
+##     W1LIFE.SAT        0.146    0.005                      0.146    0.590
+##     W2LIFE.SAT        0.148    0.006                      0.148    0.574
+##     W3LIFE.SAT        0.142    0.005                      0.142    0.543
+##     W4LIFE.SAT        0.136    0.005                      0.136    0.523
+##     W5LIFE.SAT        0.145    0.009                      0.145    0.529
+##     i                 0.106    0.009                      0.998    0.998
+##     s                 0.015    0.005                      0.981    0.981
+##     q                 0.000    0.000                      0.966    0.966
 ## 
 ## Defined parameters:
-##     tpG1              9.159   16.609    0.551    0.581    1.556   -0.563
-##     tpG2              1.559    0.298    5.228    0.000    0.265    0.186
-```
-
-```r
-## plot
-paras <- parameterEstimates(fitQG)[c(44, 13, 20, 21:23), "est"]
-FunPlot_Multi2(model = fitQG, data = dmatch, main = "Life Satisfaction", var = "LIFE.SAT", 
-    paras)
+##     tpG1              4.762    2.310    2.061    0.039    0.710   13.563
+##     tpG2              1.554    0.309    5.024    0.000    0.232    0.147
 ```
 
 ![plot of chunk MlifeSat](figure/MlifeSat.png) 
 
+[top](#top)
+<a name="Mcp"></a>
+
 
 Matched Career Prospects
 -------------------------------
-Adding Weights
 
 
-```r
-library(lavaan.survey)
-# Linear
-m_linear <- Model_Fun(name = "CAREER.PROS", params = list(i = TRUE, s = TRUE, 
-    q = F, ig = F, sg = F, qg = F))
-des <- svydesign(ids = ~id, weights = ~weights, data = dmatch)
-fitL <- growth(m_linear, data = dmatch, missing = "fiml")
-fitL <- lavaan.survey(fitL, survey.design = des, estimator = "ML")
+```
+## Warning: Estimator 'ML' will not correct standard errors and chi-square statistic.
+## Warning: Estimator 'ML' will not correct standard errors and chi-square statistic.
+## Warning: Estimator 'ML' will not correct standard errors and chi-square statistic.
 ```
 
 ```
-## Warning: Estimator 'ML' will not correct standard errors and chi-square
-## statistic.
-```
-
-```r
-# Quadratic
-m_quadratic <- Model_Fun(name = "CAREER.PROS", params = list(i = T, s = T, q = T, 
-    ig = F, sg = F, qg = F))
-fitQ <- growth(m_quadratic, data = dmatch, missing = "fiml")
-fitQ <- lavaan.survey(fitQ, survey.design = des, estimator = "ML")
-```
-
-```
-## Warning: Estimator 'ML' will not correct standard errors and chi-square
-## statistic.
-```
-
-```r
-fitQ <- growth(m_quadratic, data = dmatch, missing = "fiml")
-fitQ <- lavaan.survey(fitQ, survey.design = des, estimator = "ML")
-```
-
-```
-## Warning: Estimator 'ML' will not correct standard errors and chi-square
-## statistic.
-```
-
-```r
-Fit <- rbind(fitMeasures(fitL)[c("chisq", "df", "cfi", "tli", "rmsea")], fitMeasures(fitQ)[c("chisq", 
-    "df", "cfi", "tli", "rmsea")])
-Fit
-```
-
-```
-##       chisq df    cfi    tli   rmsea
-## [1,] 223.00 16 0.9058 0.9117 0.07700
-## [2,]  57.14 12 0.9795 0.9743 0.04152
-```
-
-```r
-anova(fitL, fitQ)
+##      chisq df    cfi    tli   rmsea
+## [1,] 188.8 16 0.9149 0.9202 0.07164
+## [2,]  34.9 12 0.9887 0.9859 0.03011
 ```
 
 ```
 ## Chi Square Difference Test
 ## 
 ##      Df   AIC   BIC Chisq Chisq diff Df diff Pr(>Chisq)    
-## fitQ 12 20761 20847  57.1                                  
-## fitL 16 20919 20982 223.0        166       4     <2e-16 ***
+## fitQ 12 20082 20167  34.9                                  
+## fitL 16 20228 20290 188.8        154       4     <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
-summary(fitQ, standardized = TRUE)
 ```
-
-```
-## lavaan (0.5-16) converged normally after  83 iterations
+## lavaan (0.5-16) converged normally after  94 iterations
 ## 
-##   Number of observations                          2182
+##   Number of observations                          2104
 ## 
 ##   Estimator                                         ML
-##   Minimum Function Test Statistic               57.145
+##   Minimum Function Test Statistic               34.896
 ##   Degrees of freedom                                12
 ##   P-value (Chi-square)                           0.000
 ## 
@@ -1308,64 +999,55 @@ summary(fitQ, standardized = TRUE)
 ##                    Estimate  Std.err  Z-value  P(>|z|)   Std.lv  Std.all
 ## Latent variables:
 ##   i =~
-##     W0CAREER.PROS     1.000                               0.312    0.544
-##     W1CAREER.PROS     1.000                               0.312    0.572
-##     W2CAREER.PROS     1.000                               0.312    0.560
-##     W3CAREER.PROS     1.000                               0.312    0.537
-##     W4CAREER.PROS     1.000                               0.312    0.497
-##     W5CAREER.PROS     1.000                               0.312    0.516
+##     W0CAREER.PROS     1.000                               0.297    0.514
+##     W1CAREER.PROS     1.000                               0.297    0.548
+##     W2CAREER.PROS     1.000                               0.297    0.535
+##     W3CAREER.PROS     1.000                               0.297    0.512
+##     W4CAREER.PROS     1.000                               0.297    0.476
+##     W5CAREER.PROS     1.000                               0.297    0.492
 ##   s =~
 ##     W0CAREER.PROS     0.000                               0.000    0.000
-##     W1CAREER.PROS     1.000                               0.202    0.371
-##     W2CAREER.PROS     2.000                               0.405    0.727
-##     W3CAREER.PROS     3.000                               0.607    1.045
-##     W4CAREER.PROS     4.000                               0.810    1.291
-##     W5CAREER.PROS     5.000                               1.012    1.675
+##     W1CAREER.PROS     1.000                               0.187    0.344
+##     W2CAREER.PROS     2.000                               0.373    0.672
+##     W3CAREER.PROS     3.000                               0.560    0.964
+##     W4CAREER.PROS     4.000                               0.747    1.196
+##     W5CAREER.PROS     5.000                               0.933    1.544
 ##   q =~
 ##     W0CAREER.PROS     0.000                               0.000    0.000
-##     W1CAREER.PROS     1.000                               0.041    0.075
-##     W2CAREER.PROS     4.000                               0.164    0.295
-##     W3CAREER.PROS     9.000                               0.370    0.637
-##     W4CAREER.PROS    16.000                               0.658    1.049
-##     W5CAREER.PROS    25.000                               1.028    1.701
+##     W1CAREER.PROS     1.000                               0.039    0.072
+##     W2CAREER.PROS     4.000                               0.157    0.283
+##     W3CAREER.PROS     9.000                               0.353    0.608
+##     W4CAREER.PROS    16.000                               0.628    1.006
+##     W5CAREER.PROS    25.000                               0.981    1.624
 ## 
 ## Covariances:
 ##   i ~~
-##     s                -0.009    0.008   -1.120    0.263   -0.147   -0.147
-##     q                 0.000    0.001    0.293    0.769    0.031    0.031
+##     s                -0.005    0.008   -0.535    0.593   -0.082   -0.082
+##     q                -0.000    0.001   -0.070    0.944   -0.008   -0.008
 ##   s ~~
-##     q                -0.008    0.001   -5.672    0.000   -0.912   -0.912
+##     q                -0.007    0.001   -4.863    0.000   -0.907   -0.907
 ## 
 ## Intercepts:
-##     s         (b)     0.072    0.009    7.691    0.000    0.356    0.356
-##     q         (c)    -0.014    0.002   -7.908    0.000   -0.340   -0.340
+##     s         (b)     0.076    0.010    8.008    0.000    0.408    0.408
+##     q         (c)    -0.015    0.002   -8.269    0.000   -0.379   -0.379
 ##     W0CAREER.         0.000                               0.000    0.000
 ##     W1CAREER.         0.000                               0.000    0.000
 ##     W2CAREER.         0.000                               0.000    0.000
 ##     W3CAREER.         0.000                               0.000    0.000
 ##     W4CAREER.         0.000                               0.000    0.000
 ##     W5CAREER.         0.000                               0.000    0.000
-##     i                 3.337    0.011  294.034    0.000   10.700   10.700
+##     i                 3.338    0.012  288.587    0.000   11.230   11.230
 ## 
 ## Variances:
-##     W0CAREER.PROS     0.231    0.013                      0.231    0.704
-##     W1CAREER.PROS     0.190    0.007                      0.190    0.640
-##     W2CAREER.PROS     0.177    0.007                      0.177    0.571
-##     W3CAREER.PROS     0.193    0.008                      0.193    0.572
-##     W4CAREER.PROS     0.240    0.009                      0.240    0.611
-##     W5CAREER.PROS     0.157    0.013                      0.157    0.429
-##     i                 0.097    0.012                      1.000    1.000
-##     s                 0.041    0.008                      1.000    1.000
+##     W0CAREER.PROS     0.246    0.014                      0.246    0.736
+##     W1CAREER.PROS     0.192    0.007                      0.192    0.653
+##     W2CAREER.PROS     0.182    0.007                      0.182    0.588
+##     W3CAREER.PROS     0.199    0.008                      0.199    0.589
+##     W4CAREER.PROS     0.240    0.009                      0.240    0.615
+##     W5CAREER.PROS     0.155    0.014                      0.155    0.425
+##     i                 0.088    0.012                      1.000    1.000
+##     s                 0.035    0.008                      1.000    1.000
 ##     q                 0.002    0.000                      1.000    1.000
-```
-
-```r
-# By Group
-mG_quadratic <- Model_Fun(name = "CAREER.PROS", params = list(i = T, s = T, 
-    q = T, ig = T, sg = T, qg = T))
-mG_quadratic <- gsub("group", "group.x", mG_quadratic)
-fitQG <- growth(mG_quadratic, data = dmatch, missing = "fiml")
-fitQG <- lavaan.survey(fitQG, survey.design = des, estimator = "ML")
 ```
 
 ```
@@ -1373,31 +1055,22 @@ fitQG <- lavaan.survey(fitQG, survey.design = des, estimator = "ML")
 ## statistic.
 ```
 
-```r
-Fit <- rbind(Fit, fitMeasures(fitQG)[c("chisq", "df", "cfi", "tli", "rmsea")])
-Fit
-```
-
 ```
 ##       chisq df    cfi    tli   rmsea
-## [1,] 223.00 16 0.9058 0.9117 0.07700
-## [2,]  57.14 12 0.9795 0.9743 0.04152
-## [3,]  61.24 15 0.9790 0.9706 0.03759
-```
-
-```r
-summary(fitQG, standardized = TRUE)
+## [1,] 188.78 16 0.9149 0.9202 0.07164
+## [2,]  34.90 12 0.9887 0.9859 0.03011
+## [3,]  36.15 15 0.9896 0.9854 0.02588
 ```
 
 ```
-## lavaan (0.5-16) converged normally after 104 iterations
+## lavaan (0.5-16) converged normally after  96 iterations
 ## 
-##   Number of observations                          2182
+##   Number of observations                          2104
 ## 
 ##   Estimator                                         ML
-##   Minimum Function Test Statistic               61.244
+##   Minimum Function Test Statistic               36.145
 ##   Degrees of freedom                                15
-##   P-value (Chi-square)                           0.000
+##   P-value (Chi-square)                           0.002
 ## 
 ## Parameter estimates:
 ## 
@@ -1407,100 +1080,82 @@ summary(fitQG, standardized = TRUE)
 ##                    Estimate  Std.err  Z-value  P(>|z|)   Std.lv  Std.all
 ## Latent variables:
 ##   i =~
-##     W0CAREER.PROS     1.000                               0.312    0.544
-##     W1CAREER.PROS     1.000                               0.312    0.572
-##     W2CAREER.PROS     1.000                               0.312    0.560
-##     W3CAREER.PROS     1.000                               0.312    0.536
-##     W4CAREER.PROS     1.000                               0.312    0.497
-##     W5CAREER.PROS     1.000                               0.312    0.516
+##     W0CAREER.PROS     1.000                               0.297    0.514
+##     W1CAREER.PROS     1.000                               0.297    0.548
+##     W2CAREER.PROS     1.000                               0.297    0.535
+##     W3CAREER.PROS     1.000                               0.297    0.511
+##     W4CAREER.PROS     1.000                               0.297    0.476
+##     W5CAREER.PROS     1.000                               0.297    0.492
 ##   s =~
 ##     W0CAREER.PROS     0.000                               0.000    0.000
-##     W1CAREER.PROS     1.000                               0.202    0.371
-##     W2CAREER.PROS     2.000                               0.405    0.727
-##     W3CAREER.PROS     3.000                               0.607    1.044
-##     W4CAREER.PROS     4.000                               0.809    1.290
-##     W5CAREER.PROS     5.000                               1.011    1.674
+##     W1CAREER.PROS     1.000                               0.187    0.344
+##     W2CAREER.PROS     2.000                               0.373    0.671
+##     W3CAREER.PROS     3.000                               0.560    0.963
+##     W4CAREER.PROS     4.000                               0.746    1.196
+##     W5CAREER.PROS     5.000                               0.933    1.543
 ##   q =~
 ##     W0CAREER.PROS     0.000                               0.000    0.000
-##     W1CAREER.PROS     1.000                               0.041    0.075
-##     W2CAREER.PROS     4.000                               0.165    0.296
-##     W3CAREER.PROS     9.000                               0.370    0.637
-##     W4CAREER.PROS    16.000                               0.658    1.049
-##     W5CAREER.PROS    25.000                               1.028    1.702
+##     W1CAREER.PROS     1.000                               0.039    0.072
+##     W2CAREER.PROS     4.000                               0.157    0.283
+##     W3CAREER.PROS     9.000                               0.353    0.608
+##     W4CAREER.PROS    16.000                               0.628    1.006
+##     W5CAREER.PROS    25.000                               0.981    1.624
 ## 
 ## Regressions:
 ##   i ~
-##     group.x          -0.041    0.025   -1.603    0.109   -0.131   -0.058
+##     group.x          -0.035    0.026   -1.370    0.171   -0.119   -0.053
 ##   s ~
-##     group.x  (g1)     0.031    0.021    1.495    0.135    0.155    0.069
+##     group.x  (g1)     0.023    0.021    1.089    0.276    0.124    0.055
 ##   q ~
-##     group.x  (g2)    -0.006    0.004   -1.485    0.138   -0.143   -0.064
+##     group.x  (g2)    -0.004    0.004   -1.089    0.276   -0.111   -0.050
 ## 
 ## Covariances:
 ##   i ~~
-##     s                -0.009    0.008   -1.075    0.282   -0.142   -0.142
-##     q                 0.000    0.001    0.247    0.805    0.026    0.026
+##     s                -0.004    0.008   -0.506    0.613   -0.078   -0.078
+##     q                -0.000    0.001   -0.100    0.920   -0.012   -0.012
 ##   s ~~
-##     q                -0.008    0.001   -5.647    0.000   -0.911   -0.911
+##     q                -0.007    0.001   -4.847    0.000   -0.907   -0.907
 ## 
 ## Intercepts:
-##     s         (b)     0.063    0.011    5.791    0.000    0.314    0.314
-##     q         (c)    -0.012    0.002   -5.980    0.000   -0.301   -0.301
+##     s         (b)     0.070    0.011    6.244    0.000    0.374    0.374
+##     q         (c)    -0.014    0.002   -6.464    0.000   -0.348   -0.348
 ##     W0CAREER.         0.000                               0.000    0.000
 ##     W1CAREER.         0.000                               0.000    0.000
 ##     W2CAREER.         0.000                               0.000    0.000
 ##     W3CAREER.         0.000                               0.000    0.000
 ##     W4CAREER.         0.000                               0.000    0.000
 ##     W5CAREER.         0.000                               0.000    0.000
-##     i                 3.348    0.013  252.060    0.000   10.745   10.745
+##     i                 3.347    0.014  246.398    0.000   11.271   11.271
 ## 
 ## Variances:
-##     W0CAREER.PROS     0.232    0.013                      0.232    0.705
-##     W1CAREER.PROS     0.190    0.007                      0.190    0.640
-##     W2CAREER.PROS     0.177    0.007                      0.177    0.571
-##     W3CAREER.PROS     0.193    0.008                      0.193    0.572
-##     W4CAREER.PROS     0.240    0.009                      0.240    0.611
-##     W5CAREER.PROS     0.156    0.013                      0.156    0.428
-##     i                 0.097    0.012                      0.997    0.997
-##     s                 0.041    0.008                      0.995    0.995
-##     q                 0.002    0.000                      0.996    0.996
+##     W0CAREER.PROS     0.246    0.014                      0.246    0.736
+##     W1CAREER.PROS     0.192    0.007                      0.192    0.653
+##     W2CAREER.PROS     0.182    0.007                      0.182    0.588
+##     W3CAREER.PROS     0.199    0.008                      0.199    0.589
+##     W4CAREER.PROS     0.240    0.009                      0.240    0.615
+##     W5CAREER.PROS     0.155    0.014                      0.155    0.424
+##     i                 0.088    0.012                      0.997    0.997
+##     s                 0.035    0.008                      0.997    0.997
+##     q                 0.002    0.000                      0.998    0.998
 ## 
 ## Defined parameters:
-##     tpG1              2.471    0.683    3.616    0.000    0.503    0.516
-##     tpG2              2.596    0.154   16.825    0.000    0.528    0.525
-```
-
-```r
-## plot
-paras <- parameterEstimates(fitQG)[c(44, 13, 20, 21:23), "est"]
-FunPlot_Multi2(model = fitQG, data = dmatch, main = "Career Prospects", var = "CAREER.PROS", 
-    paras)
+##     tpG1              2.514    0.482    5.214    0.000    0.529    0.535
+##     tpG2              2.579    0.157   16.466    0.000    0.543    0.540
 ```
 
 ![plot of chunk McareerPros](figure/McareerPros.png) 
 
+[top](#top)
+<a name="Mfp"></a>
+
 
 Matched Future Prospects
 -------------------------------
-Adding Weights
 
-
-```r
-library(lavaan.survey)
-# Linear
-m_linear <- Model_Fun(name = "FUTURE.PROSS", params = list(i = TRUE, s = TRUE, 
-    q = F, ig = F, sg = F, qg = F))
-des <- svydesign(ids = ~id, weights = ~weights, data = dmatch)
-fitL <- growth(m_linear, data = dmatch, missing = "fiml")
-```
 
 ```
 ## Error: lavaan ERROR: missing observed variables in dataset: W0FUTURE.PROSS
 ## W1FUTURE.PROSS W2FUTURE.PROSS W3FUTURE.PROSS W4FUTURE.PROSS W5FUTURE.PROSS
-```
-
-```r
-fitL <- lavaan.survey(fitL, survey.design = des, estimator = "ML")
 ```
 
 ```
@@ -1519,68 +1174,36 @@ fitL <- lavaan.survey(fitL, survey.design = des, estimator = "ML")
 ##   expected: W0FUTURE.PROSS W1FUTURE.PROSS W2FUTURE.PROSS W3FUTURE.PROSS W4FUTURE.PROSS W5FUTURE.PROSS
 ```
 
-```r
-# Quadratic
-m_quadratic <- Model_Fun(name = "FUTURE.PROS", params = list(i = T, s = T, q = T, 
-    ig = F, sg = F, qg = F))
-fitQ <- growth(m_quadratic, data = dmatch, missing = "fiml")
-fitQ <- lavaan.survey(fitQ, survey.design = des, estimator = "ML")
+```
+## Warning: Estimator 'ML' will not correct standard errors and chi-square statistic.
+## Warning: Estimator 'ML' will not correct standard errors and chi-square statistic.
 ```
 
 ```
-## Warning: Estimator 'ML' will not correct standard errors and chi-square
-## statistic.
-```
-
-```r
-fitQ <- growth(m_quadratic, data = dmatch, missing = "fiml")
-fitQ <- lavaan.survey(fitQ, survey.design = des, estimator = "ML")
-```
-
-```
-## Warning: Estimator 'ML' will not correct standard errors and chi-square
-## statistic.
-```
-
-```r
-Fit <- rbind(fitMeasures(fitL)[c("chisq", "df", "cfi", "tli", "rmsea")], fitMeasures(fitQ)[c("chisq", 
-    "df", "cfi", "tli", "rmsea")])
-Fit
-```
-
-```
-##       chisq df    cfi    tli   rmsea
-## [1,] 223.00 16 0.9058 0.9117 0.07700
-## [2,]  18.16 12 0.9971 0.9964 0.01534
-```
-
-```r
-anova(fitL, fitQ)
+##       chisq df    cfi    tli    rmsea
+## [1,] 188.78 16 0.9149 0.9202 0.071642
+## [2,]  12.16 12 0.9999 0.9999 0.002544
 ```
 
 ```
 ## Chi Square Difference Test
 ## 
 ##      Df   AIC   BIC Chisq Chisq diff Df diff Pr(>Chisq)    
-## fitQ 12 18236 18321  18.2                                  
-## fitL 16 20919 20982 223.0        205       4     <2e-16 ***
+## fitQ 12 17674 17759  12.2                                  
+## fitL 16 20228 20290 188.8        177       4     <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
-summary(fitQ, standardized = TRUE)
 ```
-
-```
-## lavaan (0.5-16) converged normally after  85 iterations
+## lavaan (0.5-16) converged normally after  82 iterations
 ## 
-##   Number of observations                          2182
+##   Number of observations                          2104
 ## 
 ##   Estimator                                         ML
-##   Minimum Function Test Statistic               18.158
+##   Minimum Function Test Statistic               12.163
 ##   Degrees of freedom                                12
-##   P-value (Chi-square)                           0.111
+##   P-value (Chi-square)                           0.433
 ## 
 ## Parameter estimates:
 ## 
@@ -1590,64 +1213,55 @@ summary(fitQ, standardized = TRUE)
 ##                    Estimate  Std.err  Z-value  P(>|z|)   Std.lv  Std.all
 ## Latent variables:
 ##   i =~
-##     W0FUTURE.PROS     1.000                               0.318    0.587
-##     W1FUTURE.PROS     1.000                               0.318    0.619
-##     W2FUTURE.PROS     1.000                               0.318    0.610
-##     W3FUTURE.PROS     1.000                               0.318    0.593
-##     W4FUTURE.PROS     1.000                               0.318    0.611
-##     W5FUTURE.PROS     1.000                               0.318    0.602
+##     W0FUTURE.PROS     1.000                               0.303    0.561
+##     W1FUTURE.PROS     1.000                               0.303    0.589
+##     W2FUTURE.PROS     1.000                               0.303    0.584
+##     W3FUTURE.PROS     1.000                               0.303    0.558
+##     W4FUTURE.PROS     1.000                               0.303    0.586
+##     W5FUTURE.PROS     1.000                               0.303    0.573
 ##   s =~
 ##     W0FUTURE.PROS     0.000                               0.000    0.000
-##     W1FUTURE.PROS     1.000                               0.188    0.366
-##     W2FUTURE.PROS     2.000                               0.376    0.722
-##     W3FUTURE.PROS     3.000                               0.564    1.053
-##     W4FUTURE.PROS     4.000                               0.752    1.447
-##     W5FUTURE.PROS     5.000                               0.940    1.780
+##     W1FUTURE.PROS     1.000                               0.168    0.325
+##     W2FUTURE.PROS     2.000                               0.336    0.646
+##     W3FUTURE.PROS     3.000                               0.503    0.926
+##     W4FUTURE.PROS     4.000                               0.671    1.297
+##     W5FUTURE.PROS     5.000                               0.839    1.584
 ##   q =~
 ##     W0FUTURE.PROS     0.000                               0.000    0.000
-##     W1FUTURE.PROS     1.000                               0.035    0.069
-##     W2FUTURE.PROS     4.000                               0.142    0.272
-##     W3FUTURE.PROS     9.000                               0.319    0.595
-##     W4FUTURE.PROS    16.000                               0.567    1.091
-##     W5FUTURE.PROS    25.000                               0.886    1.677
+##     W1FUTURE.PROS     1.000                               0.032    0.061
+##     W2FUTURE.PROS     4.000                               0.127    0.244
+##     W3FUTURE.PROS     9.000                               0.285    0.524
+##     W4FUTURE.PROS    16.000                               0.506    0.978
+##     W5FUTURE.PROS    25.000                               0.791    1.493
 ## 
 ## Covariances:
 ##   i ~~
-##     s                -0.019    0.007   -2.650    0.008   -0.324   -0.324
-##     q                 0.002    0.001    2.060    0.039    0.220    0.220
+##     s                -0.012    0.007   -1.663    0.096   -0.244   -0.244
+##     q                 0.001    0.001    1.047    0.295    0.134    0.134
 ##   s ~~
-##     q                -0.006    0.001   -5.504    0.000   -0.938   -0.938
+##     q                -0.005    0.001   -4.242    0.000   -0.924   -0.924
 ## 
 ## Intercepts:
-##     s         (b)     0.075    0.009    8.668    0.000    0.399    0.399
-##     q         (c)    -0.013    0.002   -7.856    0.000   -0.360   -0.360
+##     s         (b)     0.070    0.009    7.992    0.000    0.416    0.416
+##     q         (c)    -0.011    0.002   -6.900    0.000   -0.357   -0.357
 ##     W0FUTURE.         0.000                               0.000    0.000
 ##     W1FUTURE.         0.000                               0.000    0.000
 ##     W2FUTURE.         0.000                               0.000    0.000
 ##     W3FUTURE.         0.000                               0.000    0.000
 ##     W4FUTURE.         0.000                               0.000    0.000
 ##     W5FUTURE.         0.000                               0.000    0.000
-##     i                 3.357    0.011  310.423    0.000   10.563   10.563
+##     i                 3.360    0.011  306.817    0.000   11.072   11.072
 ## 
 ## Variances:
-##     W0FUTURE.PROS     0.192    0.011                      0.192    0.655
-##     W1FUTURE.PROS     0.172    0.006                      0.172    0.654
-##     W2FUTURE.PROS     0.167    0.006                      0.167    0.614
-##     W3FUTURE.PROS     0.175    0.007                      0.175    0.611
-##     W4FUTURE.PROS     0.158    0.006                      0.158    0.583
-##     W5FUTURE.PROS     0.141    0.010                      0.141    0.507
-##     i                 0.101    0.011                      1.000    1.000
-##     s                 0.035    0.006                      1.000    1.000
+##     W0FUTURE.PROS     0.200    0.012                      0.200    0.685
+##     W1FUTURE.PROS     0.177    0.007                      0.177    0.665
+##     W2FUTURE.PROS     0.167    0.007                      0.167    0.619
+##     W3FUTURE.PROS     0.185    0.007                      0.185    0.627
+##     W4FUTURE.PROS     0.155    0.006                      0.155    0.580
+##     W5FUTURE.PROS     0.146    0.010                      0.146    0.520
+##     i                 0.092    0.011                      1.000    1.000
+##     s                 0.028    0.007                      1.000    1.000
 ##     q                 0.001    0.000                      1.000    1.000
-```
-
-```r
-# By Group
-mG_quadratic <- Model_Fun(name = "FUTURE.PROS", params = list(i = T, s = T, 
-    q = T, ig = T, sg = T, qg = T))
-mG_quadratic <- gsub("group", "group.x", mG_quadratic)
-fitQG <- growth(mG_quadratic, data = dmatch, missing = "fiml")
-fitQG <- lavaan.survey(fitQG, survey.design = des, estimator = "ML")
 ```
 
 ```
@@ -1655,31 +1269,22 @@ fitQG <- lavaan.survey(fitQG, survey.design = des, estimator = "ML")
 ## statistic.
 ```
 
-```r
-Fit <- rbind(Fit, fitMeasures(fitQG)[c("chisq", "df", "cfi", "tli", "rmsea")])
-Fit
+```
+##       chisq df    cfi    tli    rmsea
+## [1,] 188.78 16 0.9149 0.9202 0.071642
+## [2,]  12.16 12 0.9999 0.9999 0.002544
+## [3,]  13.76 15 1.0000 1.0009 0.000000
 ```
 
 ```
-##       chisq df    cfi    tli   rmsea
-## [1,] 223.00 16 0.9058 0.9117 0.07700
-## [2,]  18.16 12 0.9971 0.9964 0.01534
-## [3,]  19.77 15 0.9978 0.9969 0.01207
-```
-
-```r
-summary(fitQG, standardized = TRUE)
-```
-
-```
-## lavaan (0.5-16) converged normally after 127 iterations
+## lavaan (0.5-16) converged normally after  81 iterations
 ## 
-##   Number of observations                          2182
+##   Number of observations                          2104
 ## 
 ##   Estimator                                         ML
-##   Minimum Function Test Statistic               19.767
+##   Minimum Function Test Statistic               13.764
 ##   Degrees of freedom                                15
-##   P-value (Chi-square)                           0.181
+##   P-value (Chi-square)                           0.543
 ## 
 ## Parameter estimates:
 ## 
@@ -1689,76 +1294,69 @@ summary(fitQG, standardized = TRUE)
 ##                    Estimate  Std.err  Z-value  P(>|z|)   Std.lv  Std.all
 ## Latent variables:
 ##   i =~
-##     W0FUTURE.PROS     1.000                               0.318    0.587
-##     W1FUTURE.PROS     1.000                               0.318    0.619
-##     W2FUTURE.PROS     1.000                               0.318    0.610
-##     W3FUTURE.PROS     1.000                               0.318    0.593
-##     W4FUTURE.PROS     1.000                               0.318    0.611
-##     W5FUTURE.PROS     1.000                               0.318    0.602
+##     W0FUTURE.PROS     1.000                               0.303    0.561
+##     W1FUTURE.PROS     1.000                               0.303    0.589
+##     W2FUTURE.PROS     1.000                               0.303    0.584
+##     W3FUTURE.PROS     1.000                               0.303    0.558
+##     W4FUTURE.PROS     1.000                               0.303    0.586
+##     W5FUTURE.PROS     1.000                               0.303    0.573
 ##   s =~
 ##     W0FUTURE.PROS     0.000                               0.000    0.000
-##     W1FUTURE.PROS     1.000                               0.188    0.366
-##     W2FUTURE.PROS     2.000                               0.376    0.722
-##     W3FUTURE.PROS     3.000                               0.564    1.052
-##     W4FUTURE.PROS     4.000                               0.752    1.447
-##     W5FUTURE.PROS     5.000                               0.940    1.780
+##     W1FUTURE.PROS     1.000                               0.168    0.325
+##     W2FUTURE.PROS     2.000                               0.335    0.646
+##     W3FUTURE.PROS     3.000                               0.503    0.926
+##     W4FUTURE.PROS     4.000                               0.671    1.296
+##     W5FUTURE.PROS     5.000                               0.839    1.583
 ##   q =~
 ##     W0FUTURE.PROS     0.000                               0.000    0.000
-##     W1FUTURE.PROS     1.000                               0.035    0.069
-##     W2FUTURE.PROS     4.000                               0.142    0.272
-##     W3FUTURE.PROS     9.000                               0.319    0.595
-##     W4FUTURE.PROS    16.000                               0.567    1.091
-##     W5FUTURE.PROS    25.000                               0.886    1.678
+##     W1FUTURE.PROS     1.000                               0.032    0.061
+##     W2FUTURE.PROS     4.000                               0.127    0.244
+##     W3FUTURE.PROS     9.000                               0.285    0.524
+##     W4FUTURE.PROS    16.000                               0.506    0.978
+##     W5FUTURE.PROS    25.000                               0.791    1.493
 ## 
 ## Regressions:
 ##   i ~
-##     group.x           0.008    0.024    0.350    0.726    0.027    0.012
+##     group.x           0.010    0.024    0.392    0.695    0.032    0.014
 ##   s ~
-##     group.x  (g1)    -0.009    0.019   -0.463    0.644   -0.048   -0.021
+##     group.x  (g1)    -0.005    0.019   -0.245    0.807   -0.028   -0.013
 ##   q ~
-##     group.x  (g2)     0.001    0.004    0.302    0.762    0.031    0.014
+##     group.x  (g2)    -0.000    0.004   -0.076    0.939   -0.009   -0.004
 ## 
 ## Covariances:
 ##   i ~~
-##     s                -0.019    0.007   -2.646    0.008   -0.324   -0.324
-##     q                 0.002    0.001    2.057    0.040    0.220    0.220
+##     s                -0.012    0.007   -1.658    0.097   -0.243   -0.243
+##     q                 0.001    0.001    1.044    0.297    0.133    0.133
 ##   s ~~
-##     q                -0.006    0.001   -5.501    0.000   -0.938   -0.938
+##     q                -0.005    0.001   -4.241    0.000   -0.924   -0.924
 ## 
 ## Intercepts:
-##     s         (b)     0.078    0.010    7.629    0.000    0.412    0.412
-##     q         (c)    -0.013    0.002   -6.853    0.000   -0.368   -0.368
+##     s         (b)     0.071    0.010    6.918    0.000    0.425    0.425
+##     q         (c)    -0.011    0.002   -5.821    0.000   -0.355   -0.355
 ##     W0FUTURE.         0.000                               0.000    0.000
 ##     W1FUTURE.         0.000                               0.000    0.000
 ##     W2FUTURE.         0.000                               0.000    0.000
 ##     W3FUTURE.         0.000                               0.000    0.000
 ##     W4FUTURE.         0.000                               0.000    0.000
 ##     W5FUTURE.         0.000                               0.000    0.000
-##     i                 3.355    0.013  264.355    0.000   10.557   10.557
+##     i                 3.357    0.013  260.402    0.000   11.065   11.065
 ## 
 ## Variances:
-##     W0FUTURE.PROS     0.192    0.011                      0.192    0.655
-##     W1FUTURE.PROS     0.172    0.006                      0.172    0.654
-##     W2FUTURE.PROS     0.167    0.006                      0.167    0.614
-##     W3FUTURE.PROS     0.175    0.007                      0.175    0.611
-##     W4FUTURE.PROS     0.158    0.006                      0.158    0.583
-##     W5FUTURE.PROS     0.141    0.010                      0.141    0.507
-##     i                 0.101    0.011                      1.000    1.000
-##     s                 0.035    0.006                      1.000    1.000
+##     W0FUTURE.PROS     0.200    0.012                      0.200    0.685
+##     W1FUTURE.PROS     0.177    0.007                      0.177    0.665
+##     W2FUTURE.PROS     0.167    0.007                      0.167    0.619
+##     W3FUTURE.PROS     0.185    0.007                      0.185    0.627
+##     W4FUTURE.PROS     0.156    0.006                      0.156    0.581
+##     W5FUTURE.PROS     0.146    0.010                      0.146    0.520
+##     i                 0.092    0.011                      1.000    1.000
+##     s                 0.028    0.007                      1.000    1.000
 ##     q                 0.001    0.000                      1.000    1.000
 ## 
 ## Defined parameters:
-##     tpG1              3.055    0.320    9.560    0.000    0.576    0.567
-##     tpG2              2.867    0.216   13.261    0.000    0.540    0.552
-```
-
-```r
-## plot
-paras <- parameterEstimates(fitQG)[c(44, 13, 20, 21:23), "est"]
-FunPlot_Multi2(model = fitQG, data = dmatch, main = "Future Prospects", var = "FUTURE.PROS", 
-    paras)
+##     tpG1              3.471    0.546    6.360    0.000    0.655    0.623
+##     tpG2              2.889    0.230   12.566    0.000    0.545    0.574
 ```
 
 ![plot of chunk MfuturePros](figure/MfuturePros.png) 
 
-
+[top](#top)
