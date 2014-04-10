@@ -721,16 +721,16 @@ Propensity score matching
 
 ```
 ## Formula:
-##  group ~  sex + sisced + indig + laa005 + laa006 + escs + laa007 + laa025 + laa026 + laa027 + xcsl2003 + lad001 + xath2003 + intmat + instmot + matheff + anxmat + scmat + complrn + cooplrn + teachsup + disclim + pv1math + pv1math1 + pv1math2 + pv1math3 + pv1math4 + pv1read + pv1scie + pv1prob + Sses + Smath + Sread + Sscie + Sprob
+##  group ~  sex + sisced + indig + laa005 + laa006 + escs + laa007 + laa025 + laa026 + laa027 + xcsl2003 + lad001 + belong + intmat + instmot + matheff + anxmat + scmat + complrn + cooplrn + teachsup + disclim + pv1math + pv1math1 + pv1math2 + pv1math3 + pv1math4 + pv1read + pv1scie + pv1prob + Sses + Smath + Sread + Sscie + Sprob
 ```
 
 ```
 ##                m_mean_diff
-## anxmatxanxmat      -0.1416
-## intmatxintmat      -0.1262
-## laa005xdisclim      0.1191
-## anxmatxscmat        0.1153
-## laa005xcooplrn      0.1073
+## anxmatxanxmat      -0.1763
+## intmatxintmat      -0.1656
+## intmatxanxmat       0.1506
+## anxmatxscmat        0.1487
+## matheffxanxmat      0.1190
 ```
 
 ![plot of chunk PSM](figure/PSM1.png) ![plot of chunk PSM](figure/PSM2.png) 
@@ -738,23 +738,23 @@ Propensity score matching
 ```
 ## 
 ##  Large Medium  Small 
-##     79     31    590
+##     75     30    597
 ```
 
 ```
 ## 
 ## Small 
-##   700
+##   702
 ```
 
 ```
-## [1] 2104
+## [1] 2139
 ```
 
 ```
 ## group
 ##    0    1 
-## 1523  581
+## 1529  610
 ```
 
 [top](#top)

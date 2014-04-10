@@ -516,11 +516,11 @@ Propensity score matching
 matchData[,c("stateid", "schoolid", "loc")] <- apply(matchData[,c("stateid", "schoolid", "loc")],2, factor)
 #drop location and school and state for now
 set.seed(102)
-forM <- paste("group ~ ", paste0(names(matchData)[-c(1:4, 18, 36)],collapse=" + ") )
+forM <- paste("group ~ ", paste0(names(matchData)[-c(1:4, 17, 36)],collapse=" + ") )
 cat("Formula:\n", forM)
 #forM1 <- paste(forM, " + I(anxmat*disclim)")
 M1 <- matchit(as.formula(forM), data=matchData, method= "nearest", discard="both",
-              caliper = .20, ratio=3, distance="logit", distance.options=list(maxit=100), exact="xcsl2003")
+              caliper = .20, ratio=3, distance="logit", distance.options=list(maxit=100))
 SM1 <- summary(M1,  addlvariables=NULL, interactions=TRUE,standardize=TRUE)
 head(meandifftable(SM1),5)
 par(mfrow=c(1,2))
