@@ -1,9 +1,15 @@
 The Effect of a Gap Year on Outlook for The Future and on Educational Outcomes
 ========================================================
+<<<<<<< HEAD
 
 1. [Philip Parker](philip.parker@acu.edu.au): *Institute for Positive Psychology and Education; Australian Catholic University*
 2. [Felix Thoemmes](felix.thoemmes@cornell.edu): *Cornell University*
 3. [Katariina Salmela-Aro](katariina.salmela-aro@helsinki.fi): *University of Helsinki*
+=======
+1. [Philip Parker](philip.parker@acu.edu.au): **Institute for Positive Psychology and Education; Australian Catholic University**
+2. [Felix Thoemmes](felix.thoemmes@cornell.edu): **Cornell University**
+3. [Katariina Salmela-Aro](katariina.salmela-aro@helsinki.fi): **University of Helsinki**
+>>>>>>> e0bbd3a8969a24cbfbb25679b994374dc28ac1c9
 
 Abstract
 ----------------
@@ -11,6 +17,7 @@ The paper explores the effect of a gap year on young people's outlook for the fu
 
 Introduction
 -------------------
+<<<<<<< HEAD
 Gap Years have dramatically increase in popularity such that some universities are now offering financial insentives to students to undertake them (). Research in this area, however, is generally hampered by retrospective designs with no or limitied  matching of participants who undertake or do not undertake a gap-year. As such, while the majority of avaliable research suggests an extended number of benefits, there is a very real need for research that can answer counter-factual question like "Would young people outlook be more or less positive had they choosen to enter university directly rather than taking a gap year" and "Would their terary educational outcomes be better or worse". Noting that randomized control trials of differing post-school pathways are not possible, the current research seeks to address these questions using an extensive propensity score matching procedure. In particular we focus on claims in the literature that a gap-year helps resolve uncertainty around educational plans and promotes well-being (); and that those that take a gap-year have better educational outcomes ().
 
 Methodology
@@ -28,3 +35,6 @@ The focus of this research was on the single item satisfaction measures of *How 
 
 ###Statistical Analysis 
 
+=======
+Gap Years have dramatically increase in popularity such that some universities are now offering financial insentives to students to undertake them (). Research in this area, however, is generally hampered by retrospective designs with no or limitied  matching of participants who undertake or do not undertake a gap-year. As such, while the majority of avaliable research suggests an extended number of benefits, 
+>>>>>>> e0bbd3a8969a24cbfbb25679b994374dc28ac1c9
