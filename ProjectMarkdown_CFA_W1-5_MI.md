@@ -266,10 +266,6 @@ Group Parameters significant for Life Satisfaction so this model is plotted at t
 ##   0.000000   0.088189   0.160630   0.206299   0.314961   0.001575
 ```
 
-```
-## Error: argument "paras" is missing, with no default
-```
-
 ![plot of chunk lifeSat](figure/lifeSat.png) 
 
 [top](#top)
@@ -468,10 +464,6 @@ Group Parameters not significant for Life Satisfaction so pooled model is plotte
 ##      0.009449
 ```
 
-```
-## Error: argument "paras" is missing, with no default
-```
-
 ![plot of chunk careerPros](figure/careerPros.png) 
 
 [top](#top)
@@ -666,38 +658,49 @@ Extract Matching Variables
 ```
 
 ```
-## Variable: id:			Description: id
-## Variable: stateid:			Description: State territory
-## Variable: schoolid:			Description: School ID
-## Variable: loc:			Description: location class
-## Variable: sex:			Description: gender
-## Variable: sisced:			Description: education expectations
-## Variable: indig:			Description: indigenous status
-## Variable: laa005:			Description: ed plans
-## Variable: laa006:			Description: parent ed plaan
-## Variable: escs:			Description: ses index from pisa results
-## Variable: laa007:			Description: friend ed plan
-## Variable: laa025:			Description: social comparison english
-## Variable: laa026:			Description: social comparison english
-## Variable: laa027:			Description: social comparison total
-## Variable: xcsl2003:			Description: grade
-## Variable: lad001:			Description: work
-## Variable: xath2003:			Description: live parents
-## Variable: belong:			Description: sense of belonging
-## Variable: intmat:			Description: interest in math
-## Variable: instmot:			Description: intrinsic motivation
-## Variable: matheff:			Description: self-efficacy
-## Variable: anxmat:			Description: anxiety
-## Variable: scmat:			Description: self-concept
-## Variable: complrn:			Description: competative
-## Variable: cooplrn:			Description: cooperative
-## Variable: teachsup:			Description: teacher support
-## Variable: disclim:			Description: discipline climate
-```
-
-```
-## Variable: pv1:			Description: plausible values for achievement
-## Variable: HRS:			Description: hours how spent per week - 6 items
+##      Variable                                             Label
+## 2     stateid                                   State/Territory
+## 4    schoolid                                         School ID
+## 7         loc                                 MCEETYA Loc Class
+## 8         sex                                 Sex of respondent
+## 9       indig                                Final Indig Status
+## 385    sisced     Expected educational level of student (ISCED)
+## 395      escs                   Economic social cultural status
+## 398    belong                Sense of belonging to school (WLE)
+## 399    intmat                     Interest in mathematics (WLE)
+## 400   instmot      Instrumental motivation in mathematics (WLE)
+## 401   matheff                   Mathematics self-efficacy (WLE)
+## 402    anxmat                         Mathematics anxiety (WLE)
+## 403     scmat                    Mathematics self-concept (WLE)
+## 407   complrn                        Competitive learning (WLE)
+## 408   cooplrn                       Co-operative learning (WLE)
+## 409  teachsup            Teacher support in maths lessons (WLE)
+## 410   disclim       Disciplinary climate in maths lessons (WLE)
+## 432    laa005                   A5 Respondent post-school plans
+## 433    laa006                 A6 Parent post-school aspirations
+## 434    laa007                  A7 Peer post-school expectations
+## 670    laa025         A25 Self-assessment of literacy (English)
+## 671    laa026     A26 Self-assessment of numeracy (Mathematics)
+## 672    laa027                       A27 Overall self-assessment
+## 729    lad001                              D1 Currently working
+## 5196 xcsl2003            Derived: XCSL2003 Current school level
+## 5364 xath2003           Derived: XATH2003 Living with parent(s)
+## 10    pv1math                           Plausible value in math
+## 15   pv1math1         Plausible value in math - Space and Shape
+## 20   pv1math2 Plausible value in math- Change and Relationships
+## 25   pv1math3             Plausible value in math - Uncertainty
+## 30   pv1math4                Plausible value in math - Quantity
+## 35    pv1read                        Plausible value in reading
+## 40    pv1scie                        Plausible value in science
+## 45    pv1prob                Plausible value in problem solving
+## 238   st30q01                       Attitude enjoy reading Q30a
+## 239   st30q02                              Attitude effort Q30b
+## 240   st30q03                        Attitude look forward Q30c
+## 241   st30q04                        Attitude enjoy Maths  Q30d
+## 242   st30q05                             Attitude career  Q30e
+## 243   st30q06                          Attitude interested Q30f
+## 244   st30q07                       Attitude further study Q30g
+## 245   st30q08                                Attitude job  Q30h
 ```
 
 ```
@@ -709,8 +712,29 @@ Extract Matching Variables
 ## 0.000000 0.002218 0.004339 0.003568 0.004147 0.004918 0.004532 0.009740 
 ##  cooplrn teachsup  disclim  pv1math pv1math1 pv1math2 pv1math3 pv1math4 
 ## 0.011668 0.012825 0.013693 0.000000 0.000000 0.000000 0.000000 0.000000 
-##  pv1read  pv1scie  pv1prob 
-## 0.000000 0.000000 0.000000
+##  pv1read  pv1scie  pv1prob  st30q01  st30q02  st30q03  st30q04  st30q05 
+## 0.000000 0.000000 0.000000 0.006943 0.006365 0.014272 0.012150 0.006750 
+##  st30q06  st30q07  st30q08 
+## 0.014272 0.010029 0.008968
+```
+
+```
+## Loading required package: foreign
+## Loading required package: Rcpp
+## Loading required package: RcppArmadillo
+## ## 
+## ## Amelia II: Multiple Imputation
+## ## (Version 1.7.2, built: 2013-04-03)
+## ## Copyright (C) 2005-2014 James Honaker, Gary King and Matthew Blackwell
+## ## Refer to http://gking.harvard.edu/amelia/ for more information
+## ##
+```
+
+```
+## -- Imputation 1 --
+## 
+##   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20
+##  21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37
 ```
 
 [top](#top)
@@ -721,16 +745,12 @@ Propensity score matching
 
 ```
 ## Formula:
-##  group ~  sex + sisced + indig + laa005 + laa006 + escs + laa007 + laa025 + laa026 + laa027 + xcsl2003 + lad001 + belong + intmat + instmot + matheff + anxmat + scmat + complrn + cooplrn + teachsup + disclim + pv1math + pv1math1 + pv1math2 + pv1math3 + pv1math4 + pv1read + pv1scie + pv1prob + Sses + Smath + Sread + Sscie + Sprob
+##  group ~  sex + sisced + indig + laa005 + laa006 + escs + laa007 + laa025 + laa026 + laa027 + xcsl2003 + lad001 + belong + intmat + instmot + matheff + anxmat + scmat + complrn + cooplrn + teachsup + disclim + pv1math + pv1math1 + pv1math2 + pv1math3 + pv1math4 + pv1read + pv1scie + pv1prob + st30q01 + st30q02 + st30q03 + st30q04 + st30q05 + st30q06 + st30q07 + st30q08 + preLIFE.SAT + preCAREER.PROS + preFUTURE.PROS + Sses + Smath + Sread + Sscie + Sprob
 ```
 
 ```
-##                m_mean_diff
-## anxmatxanxmat      -0.1763
-## intmatxintmat      -0.1656
-## intmatxanxmat       0.1506
-## anxmatxscmat        0.1487
-## matheffxanxmat      0.1190
+## [1] m_mean_diff
+## <0 rows> (or 0-length row.names)
 ```
 
 ![plot of chunk PSM](figure/PSM1.png) ![plot of chunk PSM](figure/PSM2.png) 
@@ -738,23 +758,23 @@ Propensity score matching
 ```
 ## 
 ##  Large Medium  Small 
-##     75     30    597
+##     99     47   1029
 ```
 
 ```
 ## 
 ## Small 
-##   702
+##  1175
 ```
 
 ```
-## [1] 2139
+## [1] 2152
 ```
 
 ```
 ## group
 ##    0    1 
-## 1529  610
+## 1538  614
 ```
 
 [top](#top)

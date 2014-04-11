@@ -359,6 +359,7 @@ fitL <- growth(m_linear, data=lifeSat, missing="fiml")
 #Quadratic
 m_quadratic <- Model_Fun(name="LIFE.SAT", params = list(i=T,s=T,q=T,ig=F,sg=F,qg=F))
 fitQ <- growth(m_quadratic, data=lifeSat, missing="fiml")
+m_poly <- paste(m_quadratic, "p =~ 0*W0LIFE.SAT+1*W1LIFE.SAT+8*W2LIFE.SAT+27*W3LIFE.SAT+64*W4LIFE.SAT+125*W5LIFE.SAT", sep="\n")
 Fit <- rbind(fitMeasures(fitL)[c('chisq','df',"cfi",'tli', 'rmsea')], 
              fitMeasures(fitQ)[c('chisq','df',"cfi",'tli', 'rmsea')])
 Fit
@@ -375,7 +376,7 @@ cat("Percentage Missing:\n")
 apply(lifeSat[lifeSat$group==-1,1:6], 2, function(x) sum(is.na(x))/length(x))
 apply(lifeSat[lifeSat$group==1,1:6], 2, function(x) sum(is.na(x))/length(x))
 paras<- parameterEstimates(fitQG)[c(44,13,20,21:23),"est"]
-FunPlot_Multi(model=fitQG, data=lifeSat, main="Life Satisfaction", paras)
+FunPlot_Multi(model=fitQG, data=lifeSat, main="Life Satisfaction", paras=paras)
 ```
 [top](#top)
 
@@ -408,7 +409,7 @@ cat("Percentage Missing:\n")
 apply(careerPros[careerPros$group==-1,1:6], 2, function(x) sum(is.na(x))/length(x))
 apply(careerPros[careerPros$group==1,1:6], 2, function(x) sum(is.na(x))/length(x))
 paras<- parameterEstimates(fitQG)[c(44,13,20,21:23),"est"]
-FunPlot_Multi(model=fitQG, data=careerPros, main="Career Prospects", paras)
+FunPlot_Multi(model=fitQG, data=careerPros, main="Career Prospects", paras=paras)
 ```
 [top](#top)
 
@@ -466,20 +467,19 @@ WaveAdict_singleitem <- list(id = 'id', stateid = 'State territory', schoolid = 
                              anxmat = 'anxiety', scmat = 'self-concept', complrn = 'competative',
                              cooplrn = 'cooperative', teachsup = 'teacher support',
                             disclim = 'discipline climate')
-
 #Multi item scal and index item key|value pairs    
-WaveAdict_multiitem<- list(pv1 = "plausible values for achievement",
-                           HRS = "hours how spent per week - 6 items"
+WaveAdict_multiitem <- list(pv1 = "plausible values for achievement",
+                           HRS = "hours how spent per week - 6 items",
+                           st30q = "Attitudes toward education career - 8 item"
                            )
 
-##Print Scale descriptions and items flags
+##Print Scale descriptions and items flag
+regNames <- paste0(names(WaveAdict_multiitem),c("|","|",""), collapse="")
 print("matching Features")
-for (i in seq_along(WaveAdict_singleitem)){
-  cat(sprintf("Variable: %s:\t\t\tDescription: %s\n", names(WaveAdict_singleitem)[i], WaveAdict_singleitem[[i]][1]))
-  }
-for (i in seq_along(WaveAdict_multiitem)){
-  cat(sprintf("Variable: %s:\t\t\tDescription: %s\n", names(WaveAdict_multiitem)[i], WaveAdict_multiitem[[i]][1]))
-}
+rbind(meta[meta$Variable %in% names(WaveAdict_singleitem), c(2,4)],
+meta[meta$Variable %in% grep(regNames, names(baseData), value=TRUE), c(2,4)]
+)
+
 #extraction of multi item locations
 baseLocations <- paste0(paste0("^(", paste(names(WaveAdict_multiitem),collapse="|"), ")", ".*$"))
 FeatureIndex<-grep(baseLocations, names(baseData), value=TRUE)
@@ -497,8 +497,12 @@ apply(matchData,2, function(x) sum(is.na(x))/nrow(matchData))
 data <- rbind(UniversityEntrant2[,names(UniversityEntrant2)%in%names(Defer2)],
               Defer2[,names(Defer2)%in%names(UniversityEntrant2)])
 data$group <- c(rep(0, nrow(UniversityEntrant2)), rep(1, nrow(Defer2)))
-matchData <- merge(matchData, data[, c("id", "group")], by="id", by.all=FALSE)
-matchData <- na.omit(matchData)
+matchData <- merge(matchData,
+                   data[, c("id", "group", "W-1LIFE.SAT", "W-1CAREER.PROS", "W-1FUTURE.PROS")],
+                   by="id", by.all=FALSE)
+library(Amelia)
+matchDataMI <- amelia(matchData, m=1, idvars=c("schoolid", "id", "stateid", "loc", "xath2003"))
+matchData <- matchDataMI$imputations[[1]]
 ##########################
 #School average variables#
 ##########################
@@ -514,9 +518,10 @@ Propensity score matching
 -----------------------------
 ```{r PSM, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE}
 matchData[,c("stateid", "schoolid", "loc")] <- apply(matchData[,c("stateid", "schoolid", "loc")],2, factor)
+names(matchData)<- gsub("^W-1", "pre", names(matchData))
 #drop location and school and state for now
 set.seed(102)
-forM <- paste("group ~ ", paste0(names(matchData)[-c(1:4, 17, 36)],collapse=" + ") )
+forM <- paste("group ~ ", paste0(names(matchData)[-c(1:4, 17, 44)],collapse=" + ") )
 cat("Formula:\n", forM)
 #forM1 <- paste(forM, " + I(anxmat*disclim)")
 M1 <- matchit(as.formula(forM), data=matchData, method= "nearest", discard="both",
